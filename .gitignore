@@ -1,0 +1,9 @@
+.venv/
+.idea/
+
+single_video
+
+
+*.npy
+*.mp4
+
