@@ -1,0 +1,7 @@
+# Excluded
+.venv/
+.idea/
+
+# Data storage
+*.npy
+*.mp4
