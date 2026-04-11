@@ -14,9 +14,9 @@ The long-term goal is to support applications in athletic performance analysis, 
 | 4    | OpenCV + Matplotlib             | Generate visualizations using OpenCV and Matplotlib including pose skeleton overlays comparing user movement to reference motion and plots of feature Z-scores over time. |
 
 ## Example:
-| Input                                  | Output                           |
-|----------------------------------------|----------------------------------|
-| ![Input Sprint](docs/Input.gif) | ![Model Output](docs/Output.gif) |
+| Input                             | Output                            |
+|-----------------------------------|-----------------------------------|
+| ![Input Sprint](docs/Input.gif)   | ![Model Output](docs/Output.gif)  |
 
 buffer
 
