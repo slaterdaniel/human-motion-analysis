@@ -48,7 +48,6 @@ def main():
             training_videos.append(full_path)
 
 
-
     for video in training_videos:
         cap = cv2.VideoCapture(video)
 
