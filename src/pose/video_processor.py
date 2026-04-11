@@ -3,6 +3,17 @@ import mediapipe as mp
 import numpy as np
 import os
 
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(
+    static_image_mode=False,
+    model_complexity=2,
+    smooth_landmarks=True,
+    enable_segmentation=False,
+    smooth_segmentation=False,
+    min_detection_confidence=0.8,
+    min_tracking_confidence=0.8
+)
+
 def find_angle(a, b, c):
     """
     find angle ∠ABC
@@ -20,17 +31,7 @@ def find_angle(a, b, c):
 
     return angle_degrees
 
-def main():
-    mp_pose = mp.solutions.pose
-    pose = mp_pose.Pose(
-        static_image_mode=False,
-        model_complexity=2,
-        smooth_landmarks=True,
-        enable_segmentation=False,
-        smooth_segmentation=False,
-        min_detection_confidence=0.8,
-        min_tracking_confidence=0.8
-    )
+def get_data(user_video=None):
 
     valid_landmarks = [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 31, 32]
     window_size = 9
@@ -40,15 +41,20 @@ def main():
     all_data = []
     all_raw_data = []
 
-    training_videos = []
-    video_folder = "../../data/videos"
-    for filename in os.listdir(video_folder):
-        full_path = os.path.join(video_folder, filename)
-        if os.path.isfile(full_path):
-            training_videos.append(full_path)
+    videos = []
+    if user_video:
+        videos = [user_video]
+    else:
+        video_folder = "../data/videos"
+        for filename in os.listdir(video_folder):
+            full_path = os.path.join(video_folder, filename)
+            if os.path.isfile(full_path):
+                videos.append(full_path)
+
+        videos.pop() # TEST REMOVE LATER
 
 
-    for video in training_videos:
+    for video in videos:
         cap = cv2.VideoCapture(video)
 
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -191,8 +197,9 @@ def main():
 
         all_data.append(inputs)
 
-    np.save('raw_training_data.npy', np.concatenate(all_raw_data, axis=0))
-    np.save('training_data.npy', np.concatenate(all_data, axis=0))
 
+    all_data = np.concatenate(all_data, axis=0)
+    all_raw_data = np.concatenate(all_raw_data, axis=0)
 
-main()
+    return all_data, all_raw_data
+
