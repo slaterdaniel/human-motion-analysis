@@ -1,8 +1,9 @@
 import numpy as np
 from tensorflow.keras.models import load_model
+from pose import video_processor
 
 
-def phase_interpolation(phase, phase_num, reference_predictions, n_interp=9):
+def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
     """
     Interpolate the given phase to normalize the length of each phase to the same number of frames
     Args:
@@ -47,48 +48,65 @@ def phase_interpolation(phase, phase_num, reference_predictions, n_interp=9):
 
 def find_MAD(phase):
     # Medians of each third
-    median1 = np.median(phase[:, :, :3], axis=(0, 2))[:, None]
-    median2 = np.median(phase[:, :, 3:6], axis=(0, 2))[:, None]
-    median3 = np.median(phase[:, :, 6:], axis=(0, 2))[:, None]
+    median0 = np.median(phase[:, :, :3], axis=(0, 2))[:, None]
+    median1 = np.median(phase[:, :, 3:6], axis=(0, 2))[:, None]
+    median2 = np.median(phase[:, :, 6:], axis=(0, 2))[:, None]
 
     # Deviations of each third
-    deviation1 = np.abs(phase[:, :, :3] - median1)
-    deviation2 = np.abs(phase[:, :, 3:6] - median2)
-    deviation3 = np.abs(phase[:, :, 6:] - median3)
+    deviation0 = np.abs(phase[:, :, :3] - median0)
+    deviation1 = np.abs(phase[:, :, 3:6] - median1)
+    deviation2 = np.abs(phase[:, :, 6:] - median2)
 
     # Median Absolute Deviation of each phase
-    mad1 = np.maximum(np.median(deviation1, axis=1), 1e-7)[:, None]
-    mad2 = np.maximum(np.median(deviation2, axis=1), 1e-7)[:, None]
-    mad3 = np.maximum(np.median(deviation3, axis=1), 1e-7)[:, None]
+    mad0 = np.maximum(np.median(deviation0, axis=(0,2)), 1e-7)[:, None]
+    mad1 = np.maximum(np.median(deviation1, axis=(0,2)), 1e-7)[:, None]
+    mad2 = np.maximum(np.median(deviation2, axis=(0,2)), 1e-7)[:, None]
 
-    return mad1, median1, mad2, median2, mad3, median3
+    phase_stats = {
+        0: {
+            "mad": mad0,
+            "median": median0
+        },
+        1: {
+            "mad": mad1,
+            "median": median1
+        },
+        2: {
+            "mad": mad2,
+            "median": median2
+        }
+    }
+
+    return phase_stats
 
 
-def get_phase_statistics():
+def get_phase_statistics(reference_data, ref_raw_data):
     """
     Main function
+    Args:
+        reference data - NumPy array formatted for 1D CNN 9 frame windows
+        raw data - NumPy array where shape = [feature, frame]
     Returns:
         tuple - Median Absolute Deviations and medians of each phase split into 3 subphases of 3 frames each
     """
-    reference_data = np.load("../../reference_capture.npy")
-    raw_data = np.load('../../raw_data.npy')  # [frame, feature]
-    model = load_model('../../stride_model_50.keras')
+
+    model = load_model('../assets/phase_classifier50.keras', compile=False)
     reference_predictions = np.argmax(model.predict(reference_data), axis=1)
 
     # save raw data by phase while being grouped by feature
-    rgc = raw_data[reference_predictions == 0].T
-    rp = raw_data[reference_predictions == 1].T
-    rf = raw_data[reference_predictions == 2].T
-    lgc = raw_data[reference_predictions == 3].T
-    lp = raw_data[reference_predictions == 4].T
-    lf = raw_data[reference_predictions == 5].T
+    rgc = ref_raw_data[reference_predictions == 0].T
+    rp = ref_raw_data[reference_predictions == 1].T
+    rf = ref_raw_data[reference_predictions == 2].T
+    lgc = ref_raw_data[reference_predictions == 3].T
+    lp = ref_raw_data[reference_predictions == 4].T
+    lf = ref_raw_data[reference_predictions == 5].T
 
-    new_rgc = phase_interpolation(rgc, 0, reference_predictions)
-    new_rp = phase_interpolation(rp, 1, reference_predictions)
-    new_rf = phase_interpolation(rf, 2, reference_predictions)
-    new_lgc = phase_interpolation(lgc, 3, reference_predictions)
-    new_lp = phase_interpolation(lp, 4, reference_predictions)
-    new_lf = phase_interpolation(lf, 5, reference_predictions)
+    new_rgc = interpolate_phase(rgc, 0, reference_predictions)
+    new_rp = interpolate_phase(rp, 1, reference_predictions)
+    new_rf = interpolate_phase(rf, 2, reference_predictions)
+    new_lgc = interpolate_phase(lgc, 3, reference_predictions)
+    new_lp = interpolate_phase(lp, 4, reference_predictions)
+    new_lf = interpolate_phase(lf, 5, reference_predictions)
 
     rgc_stats = find_MAD(new_rgc)
     rp_stats = find_MAD(new_rp)
@@ -97,5 +115,14 @@ def get_phase_statistics():
     lp_stats = find_MAD(new_lp)
     lf_stats = find_MAD(new_lf)
 
-    return rgc_stats, rp_stats, rf_stats, lgc_stats, lp_stats, lp_stats, lf_stats
+    phase_stats = {
+        "rgc": rgc_stats,
+        "rp": rp_stats,
+        "rf": rf_stats,
+        "lgc": lgc_stats,
+        "lp": lp_stats,
+        "lf": lf_stats
+    }
+
+    return phase_stats
 
