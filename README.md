@@ -20,6 +20,9 @@ The long-term goal is to support applications in athletic performance analysis, 
 
 buffer
 
-![Input Sprint](docs/boeTread_pt2.gif)
+![test1](docs/boeTread_pt2.gif)
+
+![test2](docs/Left_Flight.gif)
+
 ### Output:
 [future explanation of what the output is]
