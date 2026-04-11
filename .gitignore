@@ -3,8 +3,6 @@
 
 single_video
 Sprint_Analysis
-assets
-.DS_Store
 
 *.npy
 *.mp4
