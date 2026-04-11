@@ -20,9 +20,9 @@ The long-term goal is to support applications in athletic performance analysis, 
 
 buffer
 
-![test1](docs/Input.gif)
+<img alt="test1" src="docs/Input.gif"/>
 
-![test2](docs/Output.gif)
+<img alt="test2" src="docs/Output.gif"/>
 
 ### Output:
 [future explanation of what the output is]
