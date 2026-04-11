@@ -17,6 +17,6 @@ The long-term goal is to support applications in athletic performance analysis, 
 | Input                                    | Output                                  |
 |------------------------------------------|-----------------------------------------|
 | ![Input Sprint](./docs/boeTread_pt2.gif) | ![Model Output](./docs/Left_Flight.gif) |
-
+![Input Sprint](./docs/boeTread_pt2.gif)
 ### Output:
 [future explanation of what the output is]
