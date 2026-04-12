@@ -57,6 +57,19 @@ def get_data(user_video=None):
     for video in videos:
         cap = cv2.VideoCapture(video)
 
+        if user_video:
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            fps = cap.get(cv2.CAP_PROP_FPS)
+
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            out = cv2.VideoWriter(
+                "../outputs/user_skeleton.mp4",
+                fourcc,
+                fps,
+                (width, height)
+            )
+
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         data = np.zeros((frame_count, 50)) # 50 features
 
@@ -165,6 +178,30 @@ def get_data(user_video=None):
                         data[curr_frame, 20 + count*2] = x
                         data[curr_frame, 21 + count*2] = y
                         count += 1
+
+                if user_video:
+                    canvas = np.zeros((height, width, 3), dtype=np.uint8)
+                    for connection in mp_pose.POSE_CONNECTIONS:
+                        start = connection[0]
+                        end = connection[1]
+
+                        lm1 = results.pose_landmarks.landmark[start]
+                        lm2 = results.pose_landmarks.landmark[end]
+
+                        x1 = (lm1.x - center_x) / torso_length
+                        y1 = (lm1.y - center_y) / torso_length
+
+                        x1 = int((x1 / 3 + 0.5) * width)
+                        y1 = int((y1 / 3 + 0.5) * height)
+
+                        x2 = (lm2.x - center_x) / torso_length
+                        y2 = (lm2.y - center_y) / torso_length
+
+                        x2 = int((x2 / 3 + 0.5) * width)
+                        y2 = int((y2 / 3 + 0.5) * height)
+
+                        cv2.line(canvas, (x1, y1), (x2, y2), (255, 255, 255), 2)
+                    out.write(canvas)
 
                 prev_pose = [lm for lm in current_pose]
 
