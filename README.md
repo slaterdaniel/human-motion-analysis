@@ -18,11 +18,6 @@ The long-term goal is to support applications in athletic performance analysis, 
 |-----------------------------------|-----------------------------------|
 | ![Input Sprint](docs/Input.gif)   | ![Model Output](docs/Output.gif)  |
 
-buffer
-
-<img alt="test1" src="docs/Input.gif"/>
-
-<img alt="test2" src="docs/Output.gif"/>
 
 ### Output:
 [future explanation of what the output is]
