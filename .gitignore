@@ -3,8 +3,11 @@
 
 single_video
 Sprint_Analysis
+*.DS_Store
 
 *.npy
 *.mp4
 *.keras
 *.pkl
+*.txt
+*.png
