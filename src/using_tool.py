@@ -210,7 +210,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
 
 def main():
-    np.set_printoptions(threshold=np.inf, suppress=True, precision=4, linewidth=95)
+    np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
@@ -223,6 +223,35 @@ def main():
 
     model = load_model('../assets/phase_classifier50.keras', compile=False) # 1D CNN to predict phases
     user_predictions = np.argmax(model.predict(user_data), axis=1) # predict the phases from users data
+
+    # Ground Contact Data
+    rgc_starts = []
+    lgc_starts = []
+    right_contact_lengths = []
+    left_contact_lengths = []
+    for i in range(1, len(user_predictions)):
+        if user_predictions[i] == 0 and  user_predictions[i-1] != 0:
+            rgc_starts.append(i)
+        elif user_predictions[i] == 3 and  user_predictions[i-1] != 3:
+            lgc_starts.append(i)
+
+        elif user_predictions[i] == 2 and user_predictions[i-1] == 1 and len(rgc_starts):
+            right_contact_lengths.append(i - rgc_starts[-1])
+        elif user_predictions[i] == 5 and user_predictions[i-1] == 4 and len(lgc_starts):
+            left_contact_lengths.append(i - lgc_starts[-1])
+
+    # Number of frames right/left foot is on ground each rep
+    right_contact_lengths = np.array(right_contact_lengths)
+    left_contact_lengths = np.array(left_contact_lengths)
+
+    # X values of right/left foot on initial ground contact
+    right_contacts = raw_data[48, rgc_starts]
+    left_contacts = raw_data[46, lgc_starts]
+
+    # Number of frames with right/left foot grounded
+    right_on_ground = len(user_predictions[user_predictions == 0]) + len(user_predictions[user_predictions == 1])
+    left_on_ground = len(user_predictions[user_predictions == 3]) + len(user_predictions[user_predictions == 4])
+
 
     scored_data = np.zeros(raw_data.shape) # initialize empty array for storing scored user data
 
@@ -439,6 +468,56 @@ def main():
           f"\n\n-------------------------------------------------------------------------------------------------------------"
         )
     print(f"{'Left_Flight.txt':<25} Successfully Saved\n")
+
+    # Save Ground Contact Timing
+    print("Saving Ground Contact Timing Data\n")
+    with open('../outputs/metrics/Ground_Contact_Timing.txt', 'w') as f:
+        f.write(
+            f"""
+    ---------------------
+    GROUND STRIKE POINTS
+    ---------------------
+
+Average Right Ground Strike Point:
+{np.mean(right_contacts)}
+
+Average Left Ground Strike Point:
+{np.mean(left_contacts)}
+
+
+Right Ground Striking Points:
+{right_contacts}
+
+Left Ground Striking Points:
+{left_contacts}
+
+    --------------------
+    GROUND CONTACT TIMES
+    --------------------
+
+Average Ground Contact Time:
+Frames: {(right_on_ground + left_on_ground) / rep_index[-1]:.0f}
+Seconds: {(right_on_ground + left_on_ground) / (rep_index[-1] * 30):.3f}
+
+
+Average Right Ground Contact Time:
+Frames: {right_on_ground / (rep_index[-1] // 2):.0f}
+Seconds: {right_on_ground / ((rep_index[-1] * 30) // 2):.3f}
+
+Right Ground Contact Time:
+Frames: {right_contact_lengths}
+Seconds: {right_contact_lengths / 30}
+
+
+Average Left Ground Contact Time:
+Frames: {left_on_ground / (rep_index[-1] // 2):.0f}
+Seconds: {left_on_ground / ((rep_index[-1] * 30) // 2):.3f}
+
+Left Ground Contact Time:
+Frames: {left_contact_lengths}
+Seconds: {left_contact_lengths / 30}
+""")
+    print(f"{'Ground_Contact_Timing.txt':<25} Successfully Saved\n")
 
     # Save Graphs of each features scores over time
     print("Saving Z-score Graphs of each feature\n")
