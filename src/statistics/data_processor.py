@@ -47,31 +47,37 @@ def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
 
 
 def find_MAD(phase):
-    # Medians of each third
+    # KEY | Subphases:
+    # median0 = early phase
+    # median1 = middle phase
+    # median2 = late phase
+
+    # Medians of each subphase
     median0 = np.median(phase[:, :, :3], axis=(0, 2))[:, None]
     median1 = np.median(phase[:, :, 3:6], axis=(0, 2))[:, None]
     median2 = np.median(phase[:, :, 6:], axis=(0, 2))[:, None]
 
-    # Deviations of each third
+    # Deviations of each subphase
     deviation0 = np.abs(phase[:, :, :3] - median0)
     deviation1 = np.abs(phase[:, :, 3:6] - median1)
     deviation2 = np.abs(phase[:, :, 6:] - median2)
 
-    # Median Absolute Deviation of each phase
+    # Median Absolute Deviation of each subphase
     mad0 = np.maximum(np.median(deviation0, axis=(0,2)), 1e-7)[:, None]
     mad1 = np.maximum(np.median(deviation1, axis=(0,2)), 1e-7)[:, None]
     mad2 = np.maximum(np.median(deviation2, axis=(0,2)), 1e-7)[:, None]
 
+    # Save phases into "early", "middle", and "late" subphases
     phase_stats = {
-        0: {
+        "early": {
             "mad": mad0,
             "median": median0
         },
-        1: {
+        "middle": {
             "mad": mad1,
             "median": median1
         },
-        2: {
+        "late": {
             "mad": mad2,
             "median": median2
         }
