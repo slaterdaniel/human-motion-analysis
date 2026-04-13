@@ -49,7 +49,7 @@ def find_phase_scores(phase, user_predictions, window_size=9):
 
     return np.array(total_scores), np.array(phase_lengths)
 
-def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_data, user_predictions, scored_data, window_size=9):
+def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_data, user_predictions, scored_data, FEATURE_STRINGS, window_size=9):
     """
     Saves video of the user's best instance of a phase overlaid on the worst instance
     Args:
@@ -78,64 +78,6 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
                      3: 'Left Ground Contact',
                      4: 'Left Propulsion',
                      5: 'Left Flight'}
-    FEATURE_STRINGS = [
-
-        # First 10 Values = Body Angles
-        'RIGHT SHOULDER ANGLE',
-        'LEFT SHOULDER ANGLE',
-        'RIGHT ELBOW ANGLE',
-        'LEFT ELBOW ANGLE',
-        'RIGHT HIP ANGLE',
-        'LEFT HIP ANGLE',
-        'RIGHT KNEE ANGLE',
-        'LEFT KNEE ANGLE',
-        'RIGHT ANKLE ANGLE',
-        'LEFT ANKLE ANGLE',
-
-        # Next 10 Values = Body Angle Velocities
-        'RIGHT SHOULDER ANGLE VELOCITY',
-        'LEFT SHOULDER ANGLE VELOCITY',
-        'RIGHT ELBOW ANGLE VELOCITY',
-        'LEFT ELBOW ANGLE VELOCITY',
-        'RIGHT HIP ANGLE VELOCITY',
-        'LEFT HIP ANGLE VELOCITY',
-        'RIGHT KNEE ANGLE VELOCITY',
-        'LEFT KNEE ANGLE VELOCITY',
-        'RIGHT ANKLE ANGLE VELOCITY',
-        'LEFT ANKLE ANGLE VELOCITY',
-
-        # Final 30 = mediapipe landmark coordinates
-        'NOSE X',
-        'NOSE Y',
-        'LEFT SHOULDER X',
-        'LEFT SHOULDER Y',
-        'RIGHT SHOULDER X',
-        'RIGHT SHOULDER Y',
-        'LEFT ELBOW X',
-        'LEFT ELBOW Y',
-        'RIGHT ELBOW X',
-        'RIGHT ELBOW Y',
-        'LEFT WRIST X',
-        'LEFT WRIST Y',
-        'RIGHT WRIST X',
-        'RIGHT WRIST Y',
-        'LEFT HIP X',
-        'LEFT HIP Y',
-        'RIGHT HIP X',
-        'RIGHT HIP Y',
-        'LEFT KNEE X',
-        'LEFT KNEE Y',
-        'RIGHT KNEE X',
-        'RIGHT KNEE Y',
-        'LEFT ANKLE X',
-        'LEFT ANKLE Y',
-        'RIGHT ANKLE X',
-        'RIGHT ANKLE Y',
-        'LEFT FOOT X',
-        'LEFT FOOT Y',
-        'RIGHT FOOT X',
-        'RIGHT FOOT Y',
-    ]
 
     border = window_size // 2
     length = np.maximum(worst_length, best_length)
@@ -211,6 +153,65 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
 def main():
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
+
+    FEATURE_STRINGS = [
+
+        # First 10 Values = Body Angles
+        'RIGHT SHOULDER ANGLE',
+        'LEFT SHOULDER ANGLE',
+        'RIGHT ELBOW ANGLE',
+        'LEFT ELBOW ANGLE',
+        'RIGHT HIP ANGLE',
+        'LEFT HIP ANGLE',
+        'RIGHT KNEE ANGLE',
+        'LEFT KNEE ANGLE',
+        'RIGHT ANKLE ANGLE',
+        'LEFT ANKLE ANGLE',
+
+        # Next 10 Values = Body Angle Velocities
+        'RIGHT SHOULDER ANGLE VELOCITY',
+        'LEFT SHOULDER ANGLE VELOCITY',
+        'RIGHT ELBOW ANGLE VELOCITY',
+        'LEFT ELBOW ANGLE VELOCITY',
+        'RIGHT HIP ANGLE VELOCITY',
+        'LEFT HIP ANGLE VELOCITY',
+        'RIGHT KNEE ANGLE VELOCITY',
+        'LEFT KNEE ANGLE VELOCITY',
+        'RIGHT ANKLE ANGLE VELOCITY',
+        'LEFT ANKLE ANGLE VELOCITY',
+
+        # Final 30 = mediapipe landmark coordinates
+        'NOSE X',
+        'NOSE Y',
+        'LEFT SHOULDER X',
+        'LEFT SHOULDER Y',
+        'RIGHT SHOULDER X',
+        'RIGHT SHOULDER Y',
+        'LEFT ELBOW X',
+        'LEFT ELBOW Y',
+        'RIGHT ELBOW X',
+        'RIGHT ELBOW Y',
+        'LEFT WRIST X',
+        'LEFT WRIST Y',
+        'RIGHT WRIST X',
+        'RIGHT WRIST Y',
+        'LEFT HIP X',
+        'LEFT HIP Y',
+        'RIGHT HIP X',
+        'RIGHT HIP Y',
+        'LEFT KNEE X',
+        'LEFT KNEE Y',
+        'RIGHT KNEE X',
+        'RIGHT KNEE Y',
+        'LEFT ANKLE X',
+        'LEFT ANKLE Y',
+        'RIGHT ANKLE X',
+        'RIGHT ANKLE Y',
+        'LEFT FOOT X',
+        'LEFT FOOT Y',
+        'RIGHT FOOT X',
+        'RIGHT FOOT Y',
+    ]
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
@@ -521,64 +522,6 @@ Seconds: {left_contact_lengths / 30}
 
     # Save Graphs of each features scores over time
     print("Saving Z-score Graphs of each feature\n")
-    FEATURE_STRINGS = [
-
-        # First 10 Values = Body Angles
-        'RIGHT SHOULDER ANGLE',
-        'LEFT SHOULDER ANGLE',
-        'RIGHT ELBOW ANGLE',
-        'LEFT ELBOW ANGLE',
-        'RIGHT HIP ANGLE',
-        'LEFT HIP ANGLE',
-        'RIGHT KNEE ANGLE',
-        'LEFT KNEE ANGLE',
-        'RIGHT ANKLE ANGLE',
-        'LEFT ANKLE ANGLE',
-
-        # Next 10 Values = Body Angle Velocities
-        'RIGHT SHOULDER ANGLE VELOCITY',
-        'LEFT SHOULDER ANGLE VELOCITY',
-        'RIGHT ELBOW ANGLE VELOCITY',
-        'LEFT ELBOW ANGLE VELOCITY',
-        'RIGHT HIP ANGLE VELOCITY',
-        'LEFT HIP ANGLE VELOCITY',
-        'RIGHT KNEE ANGLE VELOCITY',
-        'LEFT KNEE ANGLE VELOCITY',
-        'RIGHT ANKLE ANGLE VELOCITY',
-        'LEFT ANKLE ANGLE VELOCITY',
-
-        # Final 30 = mediapipe landmark coordinates
-        'NOSE X',
-        'NOSE Y',
-        'LEFT SHOULDER X',
-        'LEFT SHOULDER Y',
-        'RIGHT SHOULDER X',
-        'RIGHT SHOULDER Y',
-        'LEFT ELBOW X',
-        'LEFT ELBOW Y',
-        'RIGHT ELBOW X',
-        'RIGHT ELBOW Y',
-        'LEFT WRIST X',
-        'LEFT WRIST Y',
-        'RIGHT WRIST X',
-        'RIGHT WRIST Y',
-        'LEFT HIP X',
-        'LEFT HIP Y',
-        'RIGHT HIP X',
-        'RIGHT HIP Y',
-        'LEFT KNEE X',
-        'LEFT KNEE Y',
-        'RIGHT KNEE X',
-        'RIGHT KNEE Y',
-        'LEFT ANKLE X',
-        'LEFT ANKLE Y',
-        'RIGHT ANKLE X',
-        'RIGHT ANKLE Y',
-        'LEFT FOOT X',
-        'LEFT FOOT Y',
-        'RIGHT FOOT X',
-        'RIGHT FOOT Y',
-    ]
     for i in range(len(scored_data)):
         plt.figure(i, figsize=(18, 5))
         plt.title(FEATURE_STRINGS[i])
@@ -604,41 +547,41 @@ Seconds: {left_contact_lengths / 30}
                phase_lengths[rgc_phase_index][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_scores[rgc_phase_index][:, 1][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmin(phase_scores[rgc_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data)
+               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video('../outputs/overlay_videos/Right_Propulsion.mp4',
                phase_scores[rp_phase_index][:, 1][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_scores[rp_phase_index][:, 1][np.argmin(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmin(phase_scores[rp_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data)
+               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video('../outputs/overlay_videos/Right_Flight.mp4',
                phase_scores[rf_phase_index][:, 1][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_scores[rf_phase_index][:, 1][np.argmin(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmin(phase_scores[rf_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data)
+               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video('../outputs/overlay_videos/Left_Ground_Contact.mp4',
                phase_scores[lgc_phase_index][:, 1][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_scores[lgc_phase_index][:, 1][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmin(phase_scores[lgc_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data)
+               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video('../outputs/overlay_videos/Left_Propulsion.mp4',
                phase_scores[lp_phase_index][:, 1][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_scores[lp_phase_index][:, 1][np.argmin(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmin(phase_scores[lp_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data)
+               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video('../outputs/overlay_videos/Left_Flight.mp4',
                phase_scores[lf_phase_index][:, 1][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_scores[lf_phase_index][:, 1][np.argmin(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmin(phase_scores[lf_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data)
+               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
 main()
