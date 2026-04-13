@@ -1,12 +1,15 @@
 .venv/
 .idea/
+__pycache__/
 
 single_video
 Sprint_Analysis
 *.DS_Store
 
+*.pyc
 *.npy
 *.mp4
 *.keras
 *.pkl
 *.png
+*.txt
