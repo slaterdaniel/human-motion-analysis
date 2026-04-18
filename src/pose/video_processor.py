@@ -64,7 +64,7 @@ def get_data(user_video=None):
 
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             out = cv2.VideoWriter(
-                "../outputs/user_skeleton.mp4",
+                "../outputs/videos/user_skeleton/user_skeleton.mp4",
                 fourcc,
                 fps,
                 (width, height)

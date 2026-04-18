@@ -5,7 +5,6 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 
-
 # KEY:
 # rgc = right ground contact
 # rp  = right propulsion phase
@@ -65,7 +64,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     Returns:
         None
     """
-    cap = cv2.VideoCapture('../outputs/user_skeleton.mp4')
+    cap = cv2.VideoCapture('../outputs/videos/user_skeleton/user_skeleton.mp4')
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -147,7 +146,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
         for _ in range(12): out.write(blended)
 
     out.release()
-    print(f"{file[26:]:<25} Successfully Saved")
+    print(f"{file[33:]:<25} Successfully Saved")
 
 
 
@@ -254,6 +253,7 @@ def main():
     left_on_ground = len(user_predictions[user_predictions == 3]) + len(user_predictions[user_predictions == 4])
 
 
+
     scored_data = np.zeros(raw_data.shape) # initialize empty array for storing scored user data
 
     phase_strings = {
@@ -337,6 +337,21 @@ def main():
             curr += 1
         rep_index.append(curr)
     rep_index = np.array(rep_index)
+
+    # Save stride Frequency Data
+    steps_per_minute = (60 * rep_index[-1]) / (len(user_predictions) / 30)
+    strides_per_sec = []
+    window = 30
+    for i in range(len(user_predictions)):
+        start = np.maximum(0, i - window // 2)
+        end = np.minimum(len(user_predictions), i + window // 2)
+        last = user_predictions[start]
+        count = 0
+        for x in user_predictions[start+1:end]:
+            if (x == 0 or x == 3) and x != last:
+                count += 1
+            last = x
+        strides_per_sec.append(count * window // (end-start))
 
     # phases are deemed "faulty" when the mean of the sum of the features squared z scores
     # in a given phase are in higher than the 95th percentile of phase z scores
@@ -475,6 +490,12 @@ def main():
     with open('../outputs/metrics/Ground_Contact_Timing.txt', 'w') as f:
         f.write(
             f"""
+    ----------------
+    STRIDE FREQUENCY 
+    ----------------
+    
+{steps_per_minute:.3f} Steps per Minute
+
     ---------------------
     GROUND STRIKE POINTS
     ---------------------
@@ -523,8 +544,10 @@ Seconds: {left_contact_lengths / 30}
     # Save Graphs of each features scores over time
     print("Saving Z-score Graphs of each feature\n")
     for i in range(len(scored_data)):
-        plt.figure(i, figsize=(18, 5))
+        plt.figure(i+1, figsize=(18, 5))
         plt.title(FEATURE_STRINGS[i])
+        plt.xlabel("Frames")
+        plt.ylabel("Z Scores")
 
         plt.plot(scored_data[i], alpha =.25, color='b', label="Score")
 
@@ -532,52 +555,60 @@ Seconds: {left_contact_lengths / 30}
         for x in range(1, len(scored_data[i])):
             ema.append(scored_data[i, x] * .05 + ema[-1] * .95 )
 
-        plt.plot(np.array(ema), color='r', label="EMA Trend")
+        plt.plot(ema, color='r', label="EMA Trend")
 
         plt.legend()
-        plt.savefig(f"../outputs/graphs/{FEATURE_STRINGS[i]}.png", dpi=300)
+        plt.savefig(f"../outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
         plt.close()
 
+    print("Saving Stride Frequency Data:")
+    plt.figure(0, figsize=(18, 5))
+    plt.plot(strides_per_sec, label="Strides per Second")
+    plt.title("Stride Frequency")
+    plt.xlabel("Frames")
+    plt.ylabel("Strides/Second")
+    plt.savefig("../outputs/graphs/Stride_Frequency/Stride_Frequency.png", dpi=300)
+    print(f"{'Stride Frequency Data':<25} Successfully Saved\n")
 
     print("Saving Phase Overlay Videos:")
 
     # Save videos of each phase's best instance overlaid on the worst instance
-    save_video('../outputs/overlay_videos/Right_Ground_Contact.mp4',
+    save_video('../outputs/videos/overlay_videos/Right_Ground_Contact.mp4',
                phase_scores[rgc_phase_index][:, 1][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_scores[rgc_phase_index][:, 1][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/overlay_videos/Right_Propulsion.mp4',
+    save_video('../outputs/videos/overlay_videos/Right_Propulsion.mp4',
                phase_scores[rp_phase_index][:, 1][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_scores[rp_phase_index][:, 1][np.argmin(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmin(phase_scores[rp_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/overlay_videos/Right_Flight.mp4',
+    save_video('../outputs/videos/overlay_videos/Right_Flight.mp4',
                phase_scores[rf_phase_index][:, 1][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_scores[rf_phase_index][:, 1][np.argmin(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmin(phase_scores[rf_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/overlay_videos/Left_Ground_Contact.mp4',
+    save_video('../outputs/videos/overlay_videos/Left_Ground_Contact.mp4',
                phase_scores[lgc_phase_index][:, 1][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_scores[lgc_phase_index][:, 1][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/overlay_videos/Left_Propulsion.mp4',
+    save_video('../outputs/videos/overlay_videos/Left_Propulsion.mp4',
                phase_scores[lp_phase_index][:, 1][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_scores[lp_phase_index][:, 1][np.argmin(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmin(phase_scores[lp_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/overlay_videos/Left_Flight.mp4',
+    save_video('../outputs/videos/overlay_videos/Left_Flight.mp4',
                phase_scores[lf_phase_index][:, 1][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_scores[lf_phase_index][:, 1][np.argmin(phase_scores[lf_phase_index][:, 0])],
