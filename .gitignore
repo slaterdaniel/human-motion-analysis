@@ -9,6 +9,8 @@ Sprint_Analysis
 *.pyc
 *.npy
 *.mp4
+*.mov
+*.MOV
 *.keras
 *.pkl
 *.png

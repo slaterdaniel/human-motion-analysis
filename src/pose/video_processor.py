@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import os
+import ffmpeg
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(
@@ -45,17 +46,24 @@ def get_data(user_video=None):
     if user_video:
         videos = [user_video]
     else:
-        video_folder = "../data/videos"
+        video_folder = "../data/videos/training"
         for filename in os.listdir(video_folder):
             full_path = os.path.join(video_folder, filename)
             if os.path.isfile(full_path):
                 videos.append(full_path)
 
-        videos.pop() # TEST REMOVE LATER
 
 
     for video in videos:
-        cap = cv2.VideoCapture(video)
+        ( # Convert all user_input to .mp4 with the same resolution
+            ffmpeg
+            .input(video)
+            .filter('scale', width=1920, height=1080, force_original_aspect_ratio='decrease')
+            .filter('pad', width=1920, height=1080, x='(ow-iw)/2', y='(oh-ih)/2')
+            .output('../assets/current_video.mp4')
+            .run(overwrite_output=True)
+        )
+        cap = cv2.VideoCapture('../assets/current_video.mp4')
 
         if user_video:
             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -64,7 +72,7 @@ def get_data(user_video=None):
 
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             out = cv2.VideoWriter(
-                "../outputs/videos/user_skeleton/user_skeleton.mp4",
+                "../outputs/user_input/user_skeleton/user_skeleton.mp4",
                 fourcc,
                 fps,
                 (width, height)
@@ -154,7 +162,7 @@ def get_data(user_video=None):
                 c = (current_pose[31].x, current_pose[31].y)
                 data[curr_frame, 9] = find_angle(a,b,c)
 
-                # center coordinates around waist to normalize data across videos
+                # center coordinates around waist to normalize data across user_input
                 center_x = (current_pose[23].x + current_pose[24].x) / 2
                 center_y = (current_pose[23].y + current_pose[24].y) / 2
 
@@ -208,6 +216,8 @@ def get_data(user_video=None):
             curr_frame += 1
 
         cap.release()
+        if user_video:
+            out.release()
 
 
         # smooth angle data to reduce noise

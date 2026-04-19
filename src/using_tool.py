@@ -94,10 +94,10 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
         ret, read_frame = cap.read()
         if not ret or worst_start_frame + i - border >= scored_data.shape[1]:
             break
-        if i < offset or i >= offset + length:
-            color = (0, 255, 0)
-        else:
+        if offset <= i < offset + worst_length:
             color = (0, 0, 255)
+        else:
+            color = (0, 255, 0)
 
         curr_frame = int(worst_start_frame + i)
         read_frame = np.clip(read_frame * [0.5, 0.5, 1], 0, 255).astype(np.uint8)
@@ -144,13 +144,16 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
         blended = cv2.addWeighted(worst[i], 1, read_frame, 1, 0)
         for _ in range(12): out.write(blended)
-
+    cap.release()
     out.release()
     print(f"{file[33:]:<25} Successfully Saved")
 
 
 
 def main():
+
+    USER_VIDEO = "../data/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
     FEATURE_STRINGS = [
@@ -214,7 +217,7 @@ def main():
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
-    user_data, raw_data = video_processor.get_data("../data/videos/boeTread_pt2.mp4")
+    user_data, raw_data = video_processor.get_data(USER_VIDEO)
     raw_data = raw_data.T
 
     # Median Absolute Deviation (MAD) and medians of features in reference data
@@ -268,7 +271,7 @@ def main():
     length = 0 # phase length
 
     # Score user data using MAD Z-score
-    # Each phase is split into "early", "middle", and "late" subphases for comparison to reference videos
+    # Each phase is split into "early", "middle", and "late" subphases for comparison to reference user_input
     for i, current in enumerate(user_predictions):
         if current == last and not i == len(user_predictions)-1:
             length += 1
@@ -318,8 +321,8 @@ def main():
     phase_order = np.array(phase_order)
 
     # remove first and last phases to ensure they are not cut off by the video
-    phase_order[0] = 6
-    phase_order[-1] = 6 # set to 6 because phases are only 0-5
+    phase_order[0] = 6 # set to 6 because phases are only 0-5
+    phase_order[-1] = 6
 
     # find the indexes of each phase
     rgc_phase_index = phase_order == 0
@@ -576,7 +579,7 @@ Seconds: {left_contact_lengths / 30}
 
     print("Saving Phase Overlay Videos:")
 
-    # Save videos of each phase's best instance overlaid on the worst instance
+    # Save user_input of each phase's best instance overlaid on the worst instance
     save_video('../outputs/videos/overlay_videos/Right_Ground_Contact.mp4',
                phase_scores[rgc_phase_index][:, 1][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmax(phase_scores[rgc_phase_index][:, 0])],
