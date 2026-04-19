@@ -11,7 +11,7 @@ def main():
     Creates and trains 1D CNN Model and finds Median Absolute Deviation based on the training data
     """
     training_data, raw_training_data = get_data()
-    answer_key = np.load('../data/full_answer_key.npy') # To be changed
+    answer_key = np.load('../data/answerkey/full_answer_key.npy') # To be changed
 
     create_model()
     train_model(training_data, answer_key)
