@@ -10,23 +10,24 @@ from tensorflow import keras
 
 def create_model():
     window_size = 9
-    num_features = 50
+    num_features = 42
 
     model = keras.Sequential([
-        # Layer1
-        keras.layers.Conv1D(64, kernel_size=3, activation='relu', padding='same', input_shape=(window_size, num_features)),
+        # Input
+        keras.layers.Input(shape=(window_size, num_features)),
+
+        keras.layers.Conv1D(64, kernel_size=3, activation='relu', padding='same'),
         keras.layers.MaxPooling1D(pool_size=2),
 
-        # Layer2
         keras.layers.Conv1D(128, kernel_size=3, activation='relu', padding='same'),
         keras.layers.MaxPooling1D(pool_size=2),
 
-        # Layer3
         keras.layers.Conv1D(128, kernel_size=3, activation='relu', padding='same'),
 
-        # Output
         keras.layers.GlobalAveragePooling1D(),
         keras.layers.Dense(64, activation='relu'),
+
+        # Output
         keras.layers.Dense(6, activation='softmax')
     ])
 
@@ -35,5 +36,7 @@ def create_model():
         loss='sparse_categorical_crossentropy',
         metrics=['accuracy']
     )
+
+    model.summary()
 
     model.save('../assets/phase_classifier50.keras')
