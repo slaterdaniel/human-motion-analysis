@@ -152,7 +152,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
 def main():
 
-    USER_VIDEO = "../data/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+    USER_VIDEO = "../data/videos/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
 
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
@@ -368,8 +368,9 @@ def main():
     # Create a dictionary of the starting frames of each "faulty" phase
     faulty_phase_frames = {key: [] for key in range(6)}
     for i in range(len(faulty_phases)):
-        if faulty_phases[i]:
-            faulty_phase_frames[phase_order[i]].append(int(phase_scores[i, 1]))
+        phase = phase_order[i]
+        if faulty_phases[i] and phase in range(6):
+            faulty_phase_frames[phase].append(int(phase_scores[i, 1]))
 
     # ==============================================================================
     #                                 OUTPUT DATA
