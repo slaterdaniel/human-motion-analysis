@@ -4,8 +4,7 @@ import numpy as np
 import os
 import ffmpeg
 
-yolo = YOLO("../yolo26s-pose.pt")
-
+yolo = YOLO("../assets/yolo26s-pose.pt")
 
 def find_angle(a, b, c):
     """
