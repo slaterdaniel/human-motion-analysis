@@ -1,7 +1,5 @@
 import numpy as np
 from tensorflow.keras.models import load_model
-from pose import video_processor
-
 
 def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
     """
