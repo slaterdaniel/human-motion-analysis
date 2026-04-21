@@ -20,7 +20,6 @@ def main():
     phase_statistics = get_phase_statistics(training_data, raw_training_data)
     # phase_statistics[phase][subphase][mad/median]
 
-    print(phase_statistics)
     with open('../assets/phase_statistics.pkl', 'wb') as f:
         pickle.dump(phase_statistics, f)
 
