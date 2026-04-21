@@ -248,8 +248,8 @@ def main():
     left_contact_lengths = np.array(left_contact_lengths)
 
     # X values of right/left foot on initial ground contact
-    right_contacts = raw_data[48, rgc_starts]
-    left_contacts = raw_data[46, lgc_starts]
+    right_contacts = raw_data[40, rgc_starts]
+    left_contacts = raw_data[38, lgc_starts]
 
     # Number of frames with right/left foot grounded
     right_on_ground = len(user_predictions[user_predictions == 0]) + len(user_predictions[user_predictions == 1])
@@ -370,8 +370,9 @@ def main():
     # Create a dictionary of the starting frames of each "faulty" phase
     faulty_phase_frames = {key: [] for key in range(6)}
     for i in range(len(faulty_phases)):
-        if faulty_phases[i]:
-            faulty_phase_frames[phase_order[i]].append(int(phase_scores[i, 1]))
+        phase = phase_order[i]
+        if faulty_phases[i] and phase in range(6):
+            faulty_phase_frames[phase].append(int(phase_scores[i, 1]))
 
     # ==============================================================================
     #                                 OUTPUT DATA
