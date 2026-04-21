@@ -48,9 +48,11 @@ def get_data(user_video=None):
     else:
         video_folder = "../data/videos/training"
         for filename in os.listdir(video_folder):
+            if filename == ".gitkeep": continue
             full_path = os.path.join(video_folder, filename)
             if os.path.isfile(full_path):
                 videos.append(full_path)
+        videos.pop()
 
 
 
