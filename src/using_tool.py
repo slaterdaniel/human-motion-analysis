@@ -152,7 +152,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
 def main():
 
-    USER_VIDEO = "../data/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+    USER_VIDEO = "../data/videos/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
 
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
@@ -350,15 +350,17 @@ def main():
     for i in range(len(user_predictions)):
         start = np.maximum(0, i - window // 2)
         end = np.minimum(len(user_predictions), i + window // 2)
-        last_phase = user_predictions[start]
+        last_phase = None
         count = 0
 
         # count number of frames within window
         for phase in user_predictions[start+1:end]:
-            if (phase == 0 or phase == 3) and phase != last_phase: # Count rep when left or right foot hits the ground
+            if phase != last_phase: # Count number of phases in 1-sec window
                 count += 1
             last_phase = phase
-        strides_per_sec.append(count * window // (end-start)) # Adjust count to window size
+        strides = count / 3
+
+        strides_per_sec.append(strides * window / (end-start)) # Adjust count to window size
 
     # phases are deemed "faulty" when the mean of the sum of the features squared z scores
     # in a given phase are in higher than the 95th percentile of phase z scores
