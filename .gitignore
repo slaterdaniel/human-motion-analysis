@@ -12,6 +12,7 @@ Sprint_Analysis
 *.mov
 *.MOV
 *.keras
+*.pt
 *.pkl
 *.png
 *.txt
