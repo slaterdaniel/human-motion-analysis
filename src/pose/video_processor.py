@@ -74,7 +74,7 @@ def get_data(user_video=None):
 
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             out = cv2.VideoWriter(
-                "../outputs/user_input/user_skeleton/user_skeleton.mp4",
+                "../outputs/videos/user_skeleton/user_skeleton.mp4",
                 fourcc,
                 fps,
                 (width, height)
@@ -220,6 +220,7 @@ def get_data(user_video=None):
         cap.release()
         if user_video:
             out.release()
+            print('\n\nskeleton saved\n\n')
 
 
         # smooth angle data to reduce noise
