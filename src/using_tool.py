@@ -564,7 +564,7 @@ Seconds: {left_contact_lengths / 30}
 
         ema = [scored_data[i, 0]]
         for x in range(1, len(scored_data[i])):
-            ema.append(scored_data[i, x] * .05 + ema[-1] * .95 )
+            ema.append(scored_data[i, x] * .1 + ema[-1] * .9)
 
         plt.plot(ema, color='r', label="EMA Trend")
 
