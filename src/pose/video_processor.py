@@ -23,7 +23,7 @@ def find_angle(a, b, c):
 
 
 def get_data(user_video=None):
-    yolo = YOLO("../assets/yolo26s-pose.pt")
+    yolo = YOLO("../assets/yolo26x-pose.pt")
     valid_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     window_size = 9
     border = window_size // 2
@@ -90,8 +90,17 @@ def get_data(user_video=None):
 
         results = yolo.predict(source=video, save=True if user_video else False, show=True if user_video else False)
 
+        prev_pose = None
         for curr_frame, result in enumerate(results):
-            current_pose = result.keypoints.xy[0]
+            current_pose = result.keypoints.xy[0].clone()
+
+            if prev_pose is not None:
+                for i, lm in enumerate(current_pose):
+                    alpha = 0.25
+                    prev_lm = prev_pose[i]
+                    lm[0] = alpha * prev_lm[0] + (1 - alpha) * lm[0]
+                    lm[1] = alpha * prev_lm[1] + (1 - alpha) * lm[1]
+            prev_pose = current_pose
 
             # right shoulder angle
             a = (current_pose[8, 0], current_pose[8, 1])
