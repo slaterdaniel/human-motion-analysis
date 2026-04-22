@@ -4,8 +4,6 @@ import numpy as np
 import os
 import ffmpeg
 
-yolo = YOLO("../assets/yolo26s-pose.pt")
-
 def find_angle(a, b, c):
     """
     find angle ∠ABC
@@ -25,6 +23,7 @@ def find_angle(a, b, c):
 
 
 def get_data(user_video=None):
+    yolo = YOLO("../assets/yolo26x-pose.pt")
     valid_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     window_size = 9
     border = window_size // 2
@@ -47,24 +46,25 @@ def get_data(user_video=None):
         videos.pop()
 
     for video in videos:
+        width = 1920
+        height = 1080
         (  # Convert all user_input to .mp4 with the same resolution
             ffmpeg
             .input(video)
-            .filter('scale', width=1920, height=1080, force_original_aspect_ratio='decrease')
-            .filter('pad', width=1920, height=1080, x='(ow-iw)/2', y='(oh-ih)/2')
+            .filter('scale', width=width, height=height, force_original_aspect_ratio='decrease')
+            .filter('pad', width=width, height=height, x='(ow-iw)/2', y='(oh-ih)/2')
             .output('../assets/current_video.mp4')
             .run(overwrite_output=True)
         )
         cap = cv2.VideoCapture(video)
-        width = 1920
-        height = 1080
+
 
         if user_video:
             fps = cap.get(cv2.CAP_PROP_FPS)
 
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             out = cv2.VideoWriter(
-                "../assets/user_skeleton.mp4",
+                '../outputs/videos/user_skeleton/user_skeleton.mp4',
                 fourcc,
                 fps,
                 (width, height)
@@ -86,9 +86,9 @@ def get_data(user_video=None):
             ]
 
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        data = np.zeros((frame_count, 42))  # 50 features
+        data = np.zeros((frame_count, 42))  # 42 features
 
-        results = yolo.predict(source=video, save=True if user_video else False, show=False)
+        results = yolo.predict(source=video, save=True if user_video else False, show=True if user_video else False)
 
         for curr_frame, result in enumerate(results):
             current_pose = result.keypoints.xy[0]
