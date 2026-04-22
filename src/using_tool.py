@@ -158,7 +158,7 @@ def main():
 
     FEATURE_STRINGS = [
 
-        # First 10 Values = Body Angles
+        # First 8 Values = Body Angles
         'RIGHT SHOULDER ANGLE',
         'LEFT SHOULDER ANGLE',
         'RIGHT ELBOW ANGLE',
@@ -167,10 +167,10 @@ def main():
         'LEFT HIP ANGLE',
         'RIGHT KNEE ANGLE',
         'LEFT KNEE ANGLE',
-        'RIGHT ANKLE ANGLE',
-        'LEFT ANKLE ANGLE',
+        # 'RIGHT ANKLE ANGLE',
+        # 'LEFT ANKLE ANGLE',
 
-        # Next 10 Values = Body Angle Velocities
+        # Next 8 Values = Body Angle Velocities
         'RIGHT SHOULDER ANGLE VELOCITY',
         'LEFT SHOULDER ANGLE VELOCITY',
         'RIGHT ELBOW ANGLE VELOCITY',
@@ -179,8 +179,8 @@ def main():
         'LEFT HIP ANGLE VELOCITY',
         'RIGHT KNEE ANGLE VELOCITY',
         'LEFT KNEE ANGLE VELOCITY',
-        'RIGHT ANKLE ANGLE VELOCITY',
-        'LEFT ANKLE ANGLE VELOCITY',
+        # 'RIGHT ANKLE ANGLE VELOCITY',
+        # 'LEFT ANKLE ANGLE VELOCITY',
 
         # Final 30 = mediapipe landmark coordinates
         'NOSE X',
@@ -209,10 +209,10 @@ def main():
         'LEFT ANKLE Y',
         'RIGHT ANKLE X',
         'RIGHT ANKLE Y',
-        'LEFT FOOT X',
-        'LEFT FOOT Y',
-        'RIGHT FOOT X',
-        'RIGHT FOOT Y',
+        # 'LEFT FOOT X',
+        # 'LEFT FOOT Y',
+        # 'RIGHT FOOT X',
+        # 'RIGHT FOOT Y',
     ]
 
     # user data = array formatted for 1D CNN 9 frame windows
@@ -226,6 +226,7 @@ def main():
 
     model = load_model('../assets/phase_classifier50.keras', compile=False) # 1D CNN to predict phases
     user_predictions = np.argmax(model.predict(user_data), axis=1) # predict the phases from users data
+    print(user_predictions, '\n')
 
     # Ground Contact Data
     rgc_starts = []

@@ -23,7 +23,7 @@ def find_angle(a, b, c):
 
 
 def get_data(user_video=None):
-    yolo = YOLO("../assets/yolo26x-pose.pt")
+    yolo = YOLO("../assets/yolo26s-pose.pt")
     valid_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     window_size = 9
     border = window_size // 2
