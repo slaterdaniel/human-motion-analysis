@@ -23,7 +23,7 @@ def find_angle(a, b, c):
 
 
 def get_data(user_video=None):
-    yolo = YOLO("../assets/yolo26x-pose.pt")
+    yolo = YOLO("yolo11x-pose-wholebody.pt")
     valid_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     window_size = 9
     border = window_size // 2
@@ -95,8 +95,8 @@ def get_data(user_video=None):
             current_pose = result.keypoints.xy[0].clone()
 
             if prev_pose is not None:
+                alpha = 0.25
                 for i, lm in enumerate(current_pose):
-                    alpha = 0.25
                     prev_lm = prev_pose[i]
                     lm[0] = alpha * prev_lm[0] + (1 - alpha) * lm[0]
                     lm[1] = alpha * prev_lm[1] + (1 - alpha) * lm[1]
