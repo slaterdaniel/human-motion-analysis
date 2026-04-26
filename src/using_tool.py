@@ -146,13 +146,13 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
         for _ in range(12): out.write(blended)
     cap.release()
     out.release()
-    print(f"{file[33:]:<25} Successfully Saved")
+    print(f"{file[27:]:<25} Successfully Saved")
 
 
 
 def main():
 
-    USER_VIDEO = "../data/videos/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+    USER_VIDEO = "../data/videos/user_input/short-boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
 
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
