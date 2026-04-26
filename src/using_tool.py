@@ -66,11 +66,13 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     """
     skeleton_cap = cv2.VideoCapture('../outputs/videos/user_skeleton/user_skeleton.mp4')
     overlay_cap = cv2.VideoCapture('../outputs/videos/overlays/full_overlay.mp4')
-    fps = skeleton_cap.get(cv2.CAP_PROP_FPS)
+    fps = 1.5
     width = int(skeleton_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(skeleton_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     font = cv2.FONT_HERSHEY_SIMPLEX
     style = cv2.LINE_AA
+
+    vertical = True if height > width else False
 
     PHASE_STRINGS = {0: 'Right Ground Contact',
                      1: 'Right Propulsion',
@@ -87,7 +89,8 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     best_start_frame = best_frame - offset
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(file, fourcc, fps, (width*2, height))
+    out_dims = (width*2, height) if vertical else (width, height*2)
+    out = cv2.VideoWriter(file, fourcc, fps, out_dims)
     worst = []
     user_overlay = []
 
@@ -146,10 +149,11 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
         if not ret:
             break
         frame = np.clip(frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
-
         skeleton_overlay = cv2.addWeighted(worst[i], 1, frame, 1, 0)
-        final_frame = cv2.hconcat([user_overlay[i], skeleton_overlay])
-        for _ in range(12): out.write(final_frame)
+
+        concatenate = cv2.hconcat if vertical else cv2.vconcat
+        final_frame = concatenate([user_overlay[i], skeleton_overlay])
+        out.write(final_frame)
 
     overlay_cap.release()
     skeleton_cap.release()
