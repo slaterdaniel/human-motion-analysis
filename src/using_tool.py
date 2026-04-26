@@ -64,10 +64,11 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     Returns:
         None
     """
-    cap = cv2.VideoCapture('../outputs/videos/user_skeleton/user_skeleton.mp4')
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    skeleton_cap = cv2.VideoCapture('../outputs/videos/user_skeleton/user_skeleton.mp4')
+    overlay_cap = cv2.VideoCapture('../outputs/videos/overlays/full_overlay.mp4')
+    fps = skeleton_cap.get(cv2.CAP_PROP_FPS)
+    width = int(skeleton_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(skeleton_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     font = cv2.FONT_HERSHEY_SIMPLEX
     style = cv2.LINE_AA
 
@@ -89,9 +90,9 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     out = cv2.VideoWriter(file, fourcc, fps, (width, height))
     worst = []
 
-    cap.set(cv2.CAP_PROP_POS_FRAMES, worst_start_frame)
+    overlay_cap.set(cv2.CAP_PROP_POS_FRAMES, worst_start_frame)
     for i in range(length + (offset * 2)):
-        ret, read_frame = cap.read()
+        ret, read_frame = overlay_cap.read()
         if not ret or worst_start_frame + i - border >= scored_data.shape[1]:
             break
         if offset <= i < offset + worst_length:
@@ -135,16 +136,16 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
         worst.append(read_frame)
 
-    cap.set(cv2.CAP_PROP_POS_FRAMES, best_start_frame)
+    skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, best_start_frame)
     for i in range(len(worst)):
-        ret, read_frame = cap.read()
+        ret, read_frame = skeleton_cap.read()
         if not ret:
             break
         read_frame = np.clip(read_frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
 
         blended = cv2.addWeighted(worst[i], 1, read_frame, 1, 0)
         for _ in range(12): out.write(blended)
-    cap.release()
+    skeleton_cap.release()
     out.release()
     print(f"{file[27:]:<25} Successfully Saved")
 
@@ -581,42 +582,42 @@ Seconds: {left_contact_lengths / 30}
     print("Saving Phase Overlay Videos:")
 
     # Save user_input of each phase's best instance overlaid on the worst instance
-    save_video('../outputs/videos/overlay_videos/Right_Ground_Contact.mp4',
+    save_video('../outputs/videos/overlays/Right_Ground_Contact.mp4',
                phase_scores[rgc_phase_index][:, 1][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_scores[rgc_phase_index][:, 1][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Right_Propulsion.mp4',
+    save_video('../outputs/videos/overlays/Right_Propulsion.mp4',
                phase_scores[rp_phase_index][:, 1][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_scores[rp_phase_index][:, 1][np.argmin(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmin(phase_scores[rp_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Right_Flight.mp4',
+    save_video('../outputs/videos/overlays/Right_Flight.mp4',
                phase_scores[rf_phase_index][:, 1][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_scores[rf_phase_index][:, 1][np.argmin(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmin(phase_scores[rf_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Left_Ground_Contact.mp4',
+    save_video('../outputs/videos/overlays/Left_Ground_Contact.mp4',
                phase_scores[lgc_phase_index][:, 1][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_scores[lgc_phase_index][:, 1][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Left_Propulsion.mp4',
+    save_video('../outputs/videos/overlays/Left_Propulsion.mp4',
                phase_scores[lp_phase_index][:, 1][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_scores[lp_phase_index][:, 1][np.argmin(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmin(phase_scores[lp_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Left_Flight.mp4',
+    save_video('../outputs/videos/overlays/Left_Flight.mp4',
                phase_scores[lf_phase_index][:, 1][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_scores[lf_phase_index][:, 1][np.argmin(phase_scores[lf_phase_index][:, 0])],
