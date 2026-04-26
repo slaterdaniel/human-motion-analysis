@@ -31,7 +31,7 @@ def find_angle(a, b, c):
 
 def get_data(user_video=None):
 
-    config_file = "../../mmpose/configs/wholebody_2d_keypoint/rtmpose/cocktail14/rtmw-l_8xb320-270e_cocktail14-384x288.py"
+    config_file = "../mmpose/configs/wholebody_2d_keypoint/rtmpose/cocktail14/rtmw-l_8xb320-270e_cocktail14-384x288.py"
     checkpoint_file = "https://download.openmmlab.com/mmpose/v1/projects/rtmw/rtmw-dw-x-l_simcc-cocktail14_270e-384x288-20231122.pth"
 
     model = init_model(config_file, checkpoint_file, device='cpu')
@@ -50,7 +50,7 @@ def get_data(user_video=None):
     if user_video:
         videos = [user_video]
     else:
-        video_folder = "../../data/videos/training"
+        video_folder = "../data/videos/training"
         for filename in os.listdir(video_folder):
             if filename == ".gitkeep": continue
             full_path = os.path.join(video_folder, filename)
@@ -66,10 +66,10 @@ def get_data(user_video=None):
             .input(video)
             # 3. Boost contrast to help the AI see limbs against the treadmill
             .filter('eq', contrast=1.3, brightness=0.02)
-            .output('../../assets/current_video.mp4', pix_fmt='yuv420p', crf=18)
+            .output('../assets/current_video.mp4', pix_fmt='yuv420p', crf=18)
             .run(overwrite_output=True)
         )
-        cap = cv2.VideoCapture('../../assets/current_video.mp4')
+        cap = cv2.VideoCapture('../assets/current_video.mp4')
         # cap = cv2.VideoCapture(video)
 
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -79,13 +79,13 @@ def get_data(user_video=None):
         if user_video:
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             user_skeleton = cv2.VideoWriter(
-                "../../outputs/videos/user_skeleton/user_skeleton.mp4",
+                "../outputs/videos/user_skeleton/user_skeleton.mp4",
                 fourcc,
                 fps,
                 (width, height)
             )
             user_overlay = cv2.VideoWriter(
-                "../../outputs/videos/overlays/full_overlay.mp4",
+                "../outputs/videos/overlays/full_overlay.mp4",
                 fourcc,
                 fps,
                 (width, height)
@@ -261,5 +261,3 @@ def get_data(user_video=None):
     all_data = np.concatenate(all_data, axis=0)
     all_raw_data = np.concatenate(all_raw_data, axis=0)
     return all_data, all_raw_data
-
-get_data("../../data/videos/user_input/boetest.mov")
