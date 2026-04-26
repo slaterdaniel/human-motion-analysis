@@ -10,6 +10,8 @@ mock_ext = MagicMock()
 mock_ext.__spec__ = MagicMock()
 sys.modules['mmcv._ext'] = mock_ext
 
+os.environ['TORCH_HOME'] = '../mmpose'
+
 from mmpose.apis import inference_topdown, init_model
 
 def find_angle(a, b, c):
@@ -36,9 +38,8 @@ def get_data(user_video=None):
 
     model = init_model(config_file, checkpoint_file, device='cpu')
     connections = model.dataset_meta['skeleton_links'][:25]
-    connection_colors = model.dataset_meta['skeleton_link_colors']
+    connection_colors = model.dataset_meta['skeleton_link_colors'][:25]
 
-    valid_landmarks = [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 31, 32]
     window_size = 9
     border = window_size // 2
     step = 1
