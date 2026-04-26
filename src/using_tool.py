@@ -87,21 +87,25 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     best_start_frame = best_frame - offset
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(file, fourcc, fps, (width, height))
+    out = cv2.VideoWriter(file, fourcc, fps, (width*2, height))
     worst = []
+    user_overlay = []
 
     overlay_cap.set(cv2.CAP_PROP_POS_FRAMES, worst_start_frame)
+    skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, worst_start_frame)
     for i in range(length + (offset * 2)):
-        ret, read_frame = overlay_cap.read()
-        if not ret or worst_start_frame + i - border >= scored_data.shape[1]:
+        ret1, overlay_frame = overlay_cap.read()
+        ret2, skeleton_frame = skeleton_cap.read()
+        if not (ret1 and ret2) or worst_start_frame + i - border >= scored_data.shape[1]:
             break
+
         if offset <= i < offset + worst_length:
             color = (0, 0, 255)
         else:
             color = (0, 255, 0)
 
         curr_frame = int(worst_start_frame + i)
-        read_frame = np.clip(read_frame * [0.5, 0.5, 1], 0, 255).astype(np.uint8)
+        skeleton_frame = np.clip(skeleton_frame * [0.5, 0.5, 1], 0, 255).astype(np.uint8)
 
         frame_scores = scored_data[:, curr_frame - border]
         score = round(np.sum(frame_scores ** 2), 1)
@@ -110,41 +114,44 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
         error_value = round(raw_data[biggest_mistake, curr_frame - border], 2)
         reference_value = round(raw_data[biggest_mistake, int(best_start_frame + i) - border], 2)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"Phase: {PHASE_STRINGS[user_predictions[curr_frame - border]]}",
                     (int(width * .7), int(height * .45)), font, 1, color, 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"Score: {score}",
                     (int(width * .7), int(height * .5)), font, 1, color, 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"{FEATURE_STRINGS[biggest_mistake]}:",
                     (int(width * .7), int(height * .6)), font, 1, (255, 255, 255), 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"{'Error:':<8} {error_value:<8} Frame: {curr_frame + 1}",
                     (int(width * .7), int(height * .65)), font, 1, (127,127,255), 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"{'Ref:':<8} {reference_value:<8} Frame: {int(best_start_frame + i + 1)}",
                     (int(width * .7), int(height * .7)), font, 1, (127, 255, 127), 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"{'% Error:':<8} {round((error_value - reference_value) * 100 / (reference_value + 1e-8), 2)}%",
                     (int(width * .7), int(height * .75)), font, 1, (127, 255, 255), 2, style)
-
-        worst.append(read_frame)
+        user_overlay.append(overlay_frame)
+        worst.append(skeleton_frame)
 
     skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, best_start_frame)
     for i in range(len(worst)):
-        ret, read_frame = skeleton_cap.read()
+        ret, frame = skeleton_cap.read()
         if not ret:
             break
-        read_frame = np.clip(read_frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
+        frame = np.clip(frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
 
-        blended = cv2.addWeighted(worst[i], 1, read_frame, 1, 0)
-        for _ in range(12): out.write(blended)
+        skeleton_overlay = cv2.addWeighted(worst[i], 1, frame, 1, 0)
+        final_frame = cv2.hconcat([user_overlay[i], skeleton_overlay])
+        for _ in range(12): out.write(final_frame)
+
+    overlay_cap.release()
     skeleton_cap.release()
     out.release()
     print(f"{file[27:]:<25} Successfully Saved")
