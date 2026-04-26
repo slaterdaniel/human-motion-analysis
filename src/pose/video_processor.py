@@ -57,9 +57,7 @@ def get_data(user_video=None):
             full_path = os.path.join(video_folder, filename)
             if os.path.isfile(full_path):
                 videos.append(full_path)
-        videos.pop()
-
-
+        videos.pop() # REMOVE LATER
 
     for video in videos:
         (
@@ -71,7 +69,6 @@ def get_data(user_video=None):
             .run(overwrite_output=True)
         )
         cap = cv2.VideoCapture('../assets/current_video.mp4')
-        # cap = cv2.VideoCapture(video)
 
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -183,7 +180,6 @@ def get_data(user_video=None):
             left_torso = np.linalg.norm(keypoints[5] - keypoints[11])
 
             torso_length = (right_torso + left_torso) / 2
-            zoom = height * .25
             for i, lm in enumerate(np.vstack((keypoints[0], keypoints[5:17], keypoints[18], keypoints[21]))):
                 x = (lm[0] - center_x) / torso_length
                 y = (lm[1] - center_y) / torso_length
@@ -195,36 +191,31 @@ def get_data(user_video=None):
                 # Initialize blank canvas
                 canvas = np.zeros((height, width, 3), dtype=np.uint8)
 
-                # Draw circles for hands
-                rhand_x = int(((keypoints[9, 0] - center_x) * zoom / torso_length) + (width / 2))
-                rhand_y = int(((keypoints[9, 1] - center_y) * zoom / torso_length) + (height / 2))
-                cv2.circle(canvas, (rhand_x, rhand_y), 10, tuple(map(int, connection_colors[10])), -1)
+            # Draw circles for hands
+                rhand = int(keypoints[9, 0] - center_x + (width / 2)), int(keypoints[9, 1] - center_y + (height / 2))
+                lhand = int(keypoints[10, 0] - center_x + (width / 2)), int(keypoints[10, 1] - center_y + (height / 2))
+                cv2.circle(canvas, rhand, 5, (255,255,255), -1)
+                cv2.circle(canvas, lhand, 5, (255,255,255), -1)
 
-                lhand_x = int(((keypoints[10, 0] - center_x) * zoom / torso_length) + (width / 2))
-                lhand_y = int(((keypoints[10, 1] - center_y) * zoom / torso_length) + (height / 2))
-                cv2.circle(canvas, (lhand_x, lhand_y), 10, tuple(map(int, connection_colors[11])), -1)
+            cv2.circle(frame, keypoints[9].astype(int), 5, tuple(map(int, connection_colors[10])), -1)
+            cv2.circle(frame, keypoints[10].astype(int), 5, tuple(map(int, connection_colors[11])), -1)
 
-                # Draw skeleton connection
-                for i, (pt1, pt2) in enumerate(connections):
-                    lm1, lm2 = keypoints[pt1], keypoints[pt2]
-
-                    x1 = int(((lm1[0] - center_x) * zoom / torso_length) + (width / 2))
-                    y1 = int(((lm1[1] - center_y) * zoom / torso_length) + (height / 2))
-
-                    x2 = int(((lm2[0] - center_x) * zoom / torso_length) + (width / 2))
-                    y2 = int(((lm2[1] - center_y) * zoom / torso_length) + (height / 2))
-
-                    color = tuple(map(int, connection_colors[i]))
-                    cv2.line(canvas, (x1, y1), (x2, y2), color, 2)
-                user_skeleton.write(canvas)
-
+            # Draw skeleton connection
             for i, (pt1, pt2) in enumerate(connections):
                 lm1, lm2 = keypoints[pt1].astype(int), keypoints[pt2].astype(int)
                 color = tuple(map(int, connection_colors[i]))
-                cv2.line(frame, lm1, lm2, color, 2)
+                cv2.line(frame, lm1, lm2, color, 4)
+
+                if user_video:
+                    lm1 = int(lm1[0] - center_x + (width / 2)), int(lm1[1] - center_y + (height / 2))
+                    lm2 = int(lm2[0] - center_x + (width / 2)), int(lm2[1] - center_y + (height / 2))
+                    cv2.line(canvas, lm1, lm2, (255,255,255), 2)
+
+            if user_video:
+                user_skeleton.write(canvas)
+                user_overlay.write(frame)
 
             cv2.imshow('Processing Preview', frame)
-            user_overlay.write(frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -261,4 +252,5 @@ def get_data(user_video=None):
 
     all_data = np.concatenate(all_data, axis=0)
     all_raw_data = np.concatenate(all_raw_data, axis=0)
+
     return all_data, all_raw_data
