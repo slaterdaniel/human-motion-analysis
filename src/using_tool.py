@@ -1,4 +1,3 @@
-from pose import video_processor
 from tensorflow.keras.models import load_model
 import cv2
 import numpy as np
@@ -229,7 +228,19 @@ def main():
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
-    user_data, raw_data = video_processor.get_data(USER_VIDEO)
+    engine = input("What Engine Would You Like to Use?").lower()
+    if engine == 'yolo26':
+        from pose.video_processor import Yolo26
+        engine = Yolo26()
+    elif engine == 'mediapipe':
+        from pose.video_processor import MediaPipe
+        engine = MediaPipe()
+    else:
+        from pose.video_processor import MMPose
+        engine = MMPose()
+    print(engine, "- INITIALIZED")
+
+    user_data, raw_data = engine.get_data(USER_VIDEO)
     raw_data = raw_data.T
 
     # Median Absolute Deviation (MAD) and medians of features in reference data
