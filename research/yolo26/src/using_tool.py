@@ -1,4 +1,4 @@
-from pose import video_processor
+from research.yolo26.src.pose import video_processor
 from tensorflow.keras.models import load_model
 import cv2
 import numpy as np

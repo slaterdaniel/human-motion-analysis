@@ -14,5 +14,6 @@ Sprint_Analysis
 *.keras
 *.pt
 *.pkl
+*.pth
 *.png
 *.txt

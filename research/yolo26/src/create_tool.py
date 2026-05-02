@@ -1,7 +1,7 @@
-from model.creation import create_model
-from model.training import train_model
-from pose.video_processor import get_data
-from statistics.data_processor import get_phase_statistics
+from research.yolo26.src.model import create_model
+from research.yolo26.src.model import train_model
+from research.yolo26.src.pose import get_data
+from research.yolo26.src.statistics import get_phase_statistics
 import pickle
 
 import numpy as np # to be removed
