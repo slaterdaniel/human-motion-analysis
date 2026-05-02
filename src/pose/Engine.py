@@ -31,7 +31,7 @@ def find_videos(user_video=None):
     if user_video:
         videos = [user_video]
     else:
-        video_folder = "../data/videos/training"
+        video_folder = "../data/training"
         for filename in os.listdir(video_folder):
             if filename == ".gitkeep": continue
             full_path = os.path.join(video_folder, filename)

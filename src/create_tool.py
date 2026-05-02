@@ -1,9 +1,8 @@
 from model.creation import create_models
 from model.training import train_models
+from model.answer_key import create_key
 from statistics.data_processor import get_phase_statistics
 import pickle
-
-import numpy as np # to be removed
 
 def main():
     """
@@ -45,7 +44,7 @@ def main():
             training_data.append(training)
             raw_data.append(raw)
 
-    answer_key = np.load('../data/answerkey/full_answer_key.npy') # To be changed
+    answer_key = create_key()
 
     create_models(engines)
     train_models(training_data, answer_key, engines)

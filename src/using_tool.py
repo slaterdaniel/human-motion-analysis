@@ -160,7 +160,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     print(f"{file[27:]:<25} Successfully Saved")
 
 def main():
-    USER_VIDEO = "../data/videos/user_input/short-boetest.MOV" # ***REPLACE WITH FILE OF USER VIDEO***
+    USER_VIDEO = "../data/user_input/short-boetest.MOV" # ***REPLACE WITH FILE OF USER VIDEO***
 
     while True:
         engine = input("Engine to Use: ").lower()
