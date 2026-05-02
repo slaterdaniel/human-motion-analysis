@@ -1,6 +1,5 @@
-from model.creation import create_model
-from model.training import train_model
-from pose.video_processor import get_data
+from model.creation import create_models
+from model.training import train_models
 from statistics.data_processor import get_phase_statistics
 import pickle
 
@@ -10,14 +9,49 @@ def main():
     """
     Creates and trains 1D CNN Model and finds Median Absolute Deviation based on the training data
     """
-    training_data, raw_training_data = get_data()
+    while True:
+        all_engines = ['mediapipe', 'yolo26', 'mmpose']
+
+        to_create = input("Enter Engines to create:\n").lower()
+        if to_create == 'all':
+            engines = all_engines
+            break
+
+        engines = to_create.split()
+        if set(engines) - set(all_engines):
+            print(f'Invalid Engine Inputted. Please Try Again.\n')
+            continue
+        break
+
+    training_data = []
+    raw_data = []
+
+    for name in engines:
+        if name == 'mediapipe':
+            from pose import mediapipe_video_processor
+            training, raw = mediapipe_video_processor.get_data()
+            training_data.append(training)
+            raw_data.append(raw)
+
+        elif name == 'yolo26':
+            from pose import yolo26_video_processor
+            training, raw = yolo26_video_processor.get_data()
+            training_data.append(training)
+            raw_data.append(raw)
+
+        elif name == 'mmpose':
+            from pose import mmpose_video_processor
+            training, raw = mmpose_video_processor.get_data()
+            training_data.append(training)
+            raw_data.append(raw)
+
     answer_key = np.load('../data/answerkey/full_answer_key.npy') # To be changed
 
-    create_model()
-    train_model(training_data, answer_key)
-    train_model(training_data, answer_key)
+    create_models(engines)
+    train_models(training_data, answer_key, engines)
+    train_models(training_data, answer_key, engines)
 
-    phase_statistics = get_phase_statistics(training_data, raw_training_data)
+    phase_statistics = get_phase_statistics(training_data, raw_data, engines)
     # phase_statistics[phase][subphase][mad/median]
 
     print(phase_statistics)

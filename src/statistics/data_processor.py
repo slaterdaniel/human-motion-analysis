@@ -1,7 +1,5 @@
 import numpy as np
 from tensorflow.keras.models import load_model
-from pose import video_processor
-
 
 def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
     """
@@ -45,7 +43,6 @@ def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
         last = current
     return new_phase
 
-
 def find_MAD(phase):
     # KEY | Subphases:
     # median0 = early phase
@@ -82,11 +79,10 @@ def find_MAD(phase):
             "median": median2
         }
     }
-
     return phase_stats
 
 
-def get_phase_statistics(reference_data, ref_raw_data):
+def get_phase_statistics(reference_data, ref_raw_data, engines):
     """
     Main function
     Args:
@@ -95,40 +91,42 @@ def get_phase_statistics(reference_data, ref_raw_data):
     Returns:
         tuple - Median Absolute Deviations and medians of each phase split into 3 subphases of 3 frames each
     """
+    stats = {}
 
-    model = load_model('../assets/phase_classifier50.keras', compile=False)
-    reference_predictions = np.argmax(model.predict(reference_data), axis=1)
+    for data, raw, name in zip(reference_data, ref_raw_data, engines):
+        model = load_model(f'../assets/{name}_phase_classifier.keras', compile=False)
+        reference_predictions = np.argmax(model.predict(data), axis=1)
 
-    # save raw data by phase while being grouped by feature
-    rgc = ref_raw_data[reference_predictions == 0].T
-    rp = ref_raw_data[reference_predictions == 1].T
-    rf = ref_raw_data[reference_predictions == 2].T
-    lgc = ref_raw_data[reference_predictions == 3].T
-    lp = ref_raw_data[reference_predictions == 4].T
-    lf = ref_raw_data[reference_predictions == 5].T
+        # save raw data by phase while being grouped by feature
+        rgc = raw[reference_predictions == 0].T
+        rp = raw[reference_predictions == 1].T
+        rf = raw[reference_predictions == 2].T
+        lgc = raw[reference_predictions == 3].T
+        lp = raw[reference_predictions == 4].T
+        lf = raw[reference_predictions == 5].T
 
-    new_rgc = interpolate_phase(rgc, 0, reference_predictions)
-    new_rp = interpolate_phase(rp, 1, reference_predictions)
-    new_rf = interpolate_phase(rf, 2, reference_predictions)
-    new_lgc = interpolate_phase(lgc, 3, reference_predictions)
-    new_lp = interpolate_phase(lp, 4, reference_predictions)
-    new_lf = interpolate_phase(lf, 5, reference_predictions)
+        new_rgc = interpolate_phase(rgc, 0, reference_predictions)
+        new_rp = interpolate_phase(rp, 1, reference_predictions)
+        new_rf = interpolate_phase(rf, 2, reference_predictions)
+        new_lgc = interpolate_phase(lgc, 3, reference_predictions)
+        new_lp = interpolate_phase(lp, 4, reference_predictions)
+        new_lf = interpolate_phase(lf, 5, reference_predictions)
 
-    rgc_stats = find_MAD(new_rgc)
-    rp_stats = find_MAD(new_rp)
-    rf_stats = find_MAD(new_rf)
-    lgc_stats = find_MAD(new_lgc)
-    lp_stats = find_MAD(new_lp)
-    lf_stats = find_MAD(new_lf)
+        rgc_stats = find_MAD(new_rgc)
+        rp_stats = find_MAD(new_rp)
+        rf_stats = find_MAD(new_rf)
+        lgc_stats = find_MAD(new_lgc)
+        lp_stats = find_MAD(new_lp)
+        lf_stats = find_MAD(new_lf)
 
-    phase_stats = {
-        "rgc": rgc_stats,
-        "rp": rp_stats,
-        "rf": rf_stats,
-        "lgc": lgc_stats,
-        "lp": lp_stats,
-        "lf": lf_stats
-    }
+        engine_phase_stats = {
+            "rgc": rgc_stats,
+            "rp": rp_stats,
+            "rf": rf_stats,
+            "lgc": lgc_stats,
+            "lp": lp_stats,
+            "lf": lf_stats
+        }
+        stats[name] = engine_phase_stats
 
-    return phase_stats
-
+    return stats

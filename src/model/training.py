@@ -1,26 +1,10 @@
-import numpy as np
 from tensorflow import keras
 
+def train_models(training_data, answer_key, engines):
 
-def train_model(training_data, answer_key):
-
-    # Phases:
-    # 0 - Right Ground Contact
-    # 1 - Right Propulsion
-    # 2 - Right Flight
-    # 3 - Left Ground Contact
-    # 4 - Left Propulsion
-    # 5 - Left Flight
-
-    model = keras.models.load_model('../assets/phase_classifier50.keras')
-    model.fit(training_data, answer_key, epochs=40, batch_size=64, validation_split=0.2, shuffle=True)
-
-    output = model.predict(training_data)
-    count = 0
-    for out, ans in zip(np.argmax(output, axis=1), answer_key):
-        if out != ans:
-            count += 1
-    print(f'{len(output) - count}/{len(output)}')
-
-    model.save('../assets/phase_classifier50.keras')
+    for name, data in zip(engines, training_data):
+        print(len(data), len(answer_key))
+        model = keras.models.load_model(f'../assets/{name}_phase_classifier.keras')
+        model.fit(data, answer_key, epochs=40, batch_size=64, validation_split=0.2, shuffle=True)
+        model.save(f'../assets/{name}_phase_classifier.keras')
 

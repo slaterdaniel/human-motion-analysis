@@ -1,4 +1,3 @@
-from pose import video_processor
 from tensorflow.keras.models import load_model
 import cv2
 import numpy as np
@@ -64,12 +63,15 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     Returns:
         None
     """
-    cap = cv2.VideoCapture('../outputs/videos/user_skeleton/user_skeleton.mp4')
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    skeleton_cap = cv2.VideoCapture('../outputs/videos/user_skeleton/user_skeleton.mp4')
+    overlay_cap = cv2.VideoCapture('../outputs/videos/overlays/full_overlay.mp4')
+    fps = 1.5
+    width = int(skeleton_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(skeleton_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     font = cv2.FONT_HERSHEY_SIMPLEX
     style = cv2.LINE_AA
+
+    vertical = True if height > width else False
 
     PHASE_STRINGS = {0: 'Right Ground Contact',
                      1: 'Right Propulsion',
@@ -86,21 +88,26 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     best_start_frame = best_frame - offset
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(file, fourcc, fps, (width, height))
+    out_dims = (width*2, height) if vertical else (width, height*2)
+    out = cv2.VideoWriter(file, fourcc, fps, out_dims)
     worst = []
+    user_overlay = []
 
-    cap.set(cv2.CAP_PROP_POS_FRAMES, worst_start_frame)
+    overlay_cap.set(cv2.CAP_PROP_POS_FRAMES, worst_start_frame)
+    skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, worst_start_frame)
     for i in range(length + (offset * 2)):
-        ret, read_frame = cap.read()
-        if not ret or worst_start_frame + i - border >= scored_data.shape[1]:
+        ret1, overlay_frame = overlay_cap.read()
+        ret2, skeleton_frame = skeleton_cap.read()
+        if not (ret1 and ret2) or worst_start_frame + i - border >= scored_data.shape[1]:
             break
+
         if offset <= i < offset + worst_length:
             color = (0, 0, 255)
         else:
             color = (0, 255, 0)
 
         curr_frame = int(worst_start_frame + i)
-        read_frame = np.clip(read_frame * [0.5, 0.5, 1], 0, 255).astype(np.uint8)
+        skeleton_frame = np.clip(skeleton_frame * [0.5, 0.5, 1], 0, 255).astype(np.uint8)
 
         frame_scores = scored_data[:, curr_frame - border]
         score = round(np.sum(frame_scores ** 2), 1)
@@ -109,50 +116,68 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
         error_value = round(raw_data[biggest_mistake, curr_frame - border], 2)
         reference_value = round(raw_data[biggest_mistake, int(best_start_frame + i) - border], 2)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"Phase: {PHASE_STRINGS[user_predictions[curr_frame - border]]}",
                     (int(width * .7), int(height * .45)), font, 1, color, 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"Score: {score}",
                     (int(width * .7), int(height * .5)), font, 1, color, 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"{FEATURE_STRINGS[biggest_mistake]}:",
                     (int(width * .7), int(height * .6)), font, 1, (255, 255, 255), 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"{'Error:':<8} {error_value:<8} Frame: {curr_frame + 1}",
                     (int(width * .7), int(height * .65)), font, 1, (127,127,255), 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"{'Ref:':<8} {reference_value:<8} Frame: {int(best_start_frame + i + 1)}",
                     (int(width * .7), int(height * .7)), font, 1, (127, 255, 127), 2, style)
 
-        cv2.putText(read_frame,
+        cv2.putText(skeleton_frame,
                     f"{'% Error:':<8} {round((error_value - reference_value) * 100 / (reference_value + 1e-8), 2)}%",
                     (int(width * .7), int(height * .75)), font, 1, (127, 255, 255), 2, style)
+        user_overlay.append(overlay_frame)
+        worst.append(skeleton_frame)
 
-        worst.append(read_frame)
-
-    cap.set(cv2.CAP_PROP_POS_FRAMES, best_start_frame)
+    skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, best_start_frame)
     for i in range(len(worst)):
-        ret, read_frame = cap.read()
+        ret, frame = skeleton_cap.read()
         if not ret:
             break
-        read_frame = np.clip(read_frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
+        frame = np.clip(frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
+        skeleton_overlay = cv2.addWeighted(worst[i], 1, frame, 1, 0)
 
-        blended = cv2.addWeighted(worst[i], 1, read_frame, 1, 0)
-        for _ in range(12): out.write(blended)
-    cap.release()
+        concatenate = cv2.hconcat if vertical else cv2.vconcat
+        final_frame = concatenate([user_overlay[i], skeleton_overlay])
+        out.write(final_frame)
+
+    overlay_cap.release()
+    skeleton_cap.release()
     out.release()
-    print(f"{file[33:]:<25} Successfully Saved")
-
-
+    print(f"{file[27:]:<25} Successfully Saved")
 
 def main():
+    USER_VIDEO = "../data/videos/user_input/short-boetest.MOV" # ***REPLACE WITH FILE OF USER VIDEO***
 
-    USER_VIDEO = "../data/videos/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+    while True:
+        engine = input("Engine to Use: ").lower()
+        if engine == 'mediapipe':
+            from pose import mediapipe_video_processor as video_processor
+            phase_classifier = '../assets/mediapipe_phase_classifier.keras'
+            break
+        elif engine == 'yolo26':
+            from pose import yolo26_video_processor as video_processor
+            phase_classifier = '../assets/yolo26_phase_classifier.keras'
+            break
+        elif engine == 'mmpose':
+            from pose import mediapipe_video_processor as video_processor
+            phase_classifier = '../assets/mmpose_phase_classifier.keras'
+            break
+        else:
+            print("Invalid Engine Inputted. Try Again.\n")
 
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
@@ -224,8 +249,9 @@ def main():
     with open('../assets/phase_statistics.pkl', 'rb') as f:
         phase_stats = pickle.load(f)
 
-    model = load_model('../assets/phase_classifier50.keras', compile=False) # 1D CNN to predict phases
+    model = load_model(phase_classifier, compile=False) # 1D CNN to predict phases
     user_predictions = np.argmax(model.predict(user_data), axis=1) # predict the phases from users data
+    print(f'\n{user_predictions}\n')
 
     # Ground Contact Data
     rgc_starts = []
@@ -248,14 +274,14 @@ def main():
     left_contact_lengths = np.array(left_contact_lengths)
 
     # X values of right/left foot on initial ground contact
-    right_contacts = raw_data[48, rgc_starts]
-    left_contacts = raw_data[46, lgc_starts]
+    rfoot = 40 if engine == 'yolo26' else 48
+    lfoot = 38 if engine == 'yolo26' else 46
+    right_contacts = raw_data[rfoot, rgc_starts]
+    left_contacts = raw_data[lfoot, lgc_starts]
 
     # Number of frames with right/left foot grounded
     right_on_ground = len(user_predictions[user_predictions == 0]) + len(user_predictions[user_predictions == 1])
     left_on_ground = len(user_predictions[user_predictions == 3]) + len(user_predictions[user_predictions == 4])
-
-
 
     scored_data = np.zeros(raw_data.shape) # initialize empty array for storing scored user data
 
@@ -290,18 +316,18 @@ def main():
             # save MAD Z-score of subphases
             # "early" subphase
             scored_data[:, start:start + base] = (
-                    0.6745 * np.abs(raw_data[:, start:start + base] - phase_stats[phase]["early"]["median"])
-                    / phase_stats[phase]["early"]["mad"])
+                    0.6745 * np.abs(raw_data[:, start:start + base] - phase_stats[engine][phase]["early"]["median"])
+                    / phase_stats[engine][phase]["early"]["mad"])
 
             # "middle" subphase
             scored_data[:, start + base:start + base * 2 + remainder] = (
-                    0.6745 * np.abs(raw_data[:, start + base : start + base * 2 + remainder] - phase_stats[phase]["middle"]["median"])
-                    / phase_stats[phase]["middle"]["mad"])
+                    0.6745 * np.abs(raw_data[:, start + base : start + base * 2 + remainder] - phase_stats[engine][phase]["middle"]["median"])
+                    / phase_stats[engine][phase]["middle"]["mad"])
 
             # "late" subphase
             scored_data[:, start + base * 2 + remainder:i] = (
-                    0.6745 * np.abs(raw_data[:, start + base * 2 + remainder : start + length] - phase_stats[phase]["late"]["median"])
-                    / phase_stats[phase]["late"]["mad"])
+                    0.6745 * np.abs(raw_data[:, start + base * 2 + remainder : start + length] - phase_stats[engine][phase]["late"]["median"])
+                    / phase_stats[engine][phase]["late"]["mad"])
 
             length = 1
         last = current
@@ -566,7 +592,7 @@ Seconds: {left_contact_lengths / 30}
         plt.plot(ema, color='r', label="EMA Trend")
 
         plt.legend()
-        plt.savefig(f"../outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
+        # plt.savefig(f"../outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
         plt.close()
 
     print("Saving Stride Frequency Data:")
@@ -581,42 +607,42 @@ Seconds: {left_contact_lengths / 30}
     print("Saving Phase Overlay Videos:")
 
     # Save user_input of each phase's best instance overlaid on the worst instance
-    save_video('../outputs/videos/overlay_videos/Right_Ground_Contact.mp4',
+    save_video('../outputs/videos/overlays/Right_Ground_Contact.mp4',
                phase_scores[rgc_phase_index][:, 1][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_scores[rgc_phase_index][:, 1][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Right_Propulsion.mp4',
+    save_video('../outputs/videos/overlays/Right_Propulsion.mp4',
                phase_scores[rp_phase_index][:, 1][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_scores[rp_phase_index][:, 1][np.argmin(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmin(phase_scores[rp_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Right_Flight.mp4',
+    save_video('../outputs/videos/overlays/Right_Flight.mp4',
                phase_scores[rf_phase_index][:, 1][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_scores[rf_phase_index][:, 1][np.argmin(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmin(phase_scores[rf_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Left_Ground_Contact.mp4',
+    save_video('../outputs/videos/overlays/Left_Ground_Contact.mp4',
                phase_scores[lgc_phase_index][:, 1][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_scores[lgc_phase_index][:, 1][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Left_Propulsion.mp4',
+    save_video('../outputs/videos/overlays/Left_Propulsion.mp4',
                phase_scores[lp_phase_index][:, 1][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_scores[lp_phase_index][:, 1][np.argmin(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmin(phase_scores[lp_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlay_videos/Left_Flight.mp4',
+    save_video('../outputs/videos/overlays/Left_Flight.mp4',
                phase_scores[lf_phase_index][:, 1][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_scores[lf_phase_index][:, 1][np.argmin(phase_scores[lf_phase_index][:, 0])],

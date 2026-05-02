@@ -8,10 +8,7 @@ from tensorflow import keras
 # 4 - Left Propulsion
 # 5 - Left Flight
 
-def create_model():
-    window_size = 9
-    num_features = 50
-
+def model_format(window_size, num_features):
     model = keras.Sequential([
         # Input
         keras.layers.Input(shape=(window_size, num_features)),
@@ -37,6 +34,20 @@ def create_model():
         metrics=['accuracy']
     )
 
-    model.summary()
+    return model
 
-    model.save('../assets/phase_classifier50.keras')
+
+def create_models(engines):
+    window_size = 9
+
+    for name in engines:
+        if name == 'mediapipe' or name == 'mmpose':
+            num_features = 50
+            model = model_format(window_size, num_features)
+
+        elif name == 'yolo26':
+            num_features = 42
+            model = model_format(window_size, num_features)
+
+        model.summary()
+        model.save(f'../assets/{name}_phase_classifier.keras')
