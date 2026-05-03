@@ -173,7 +173,7 @@ def main():
             phase_classifier = '../assets/yolo26_phase_classifier.keras'
             break
         elif engine == 'mmpose':
-            from pose import mediapipe_video_processor as video_processor
+            from pose import mmpose_video_processor as video_processor
             phase_classifier = '../assets/mmpose_phase_classifier.keras'
             break
         else:
