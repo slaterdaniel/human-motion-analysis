@@ -4,7 +4,7 @@ import os
 import sys
 from unittest.mock import MagicMock
 import time
-import pose.Engine as Engine
+import Engine
 
 def get_data(user_video=None):
     mock_ext = MagicMock()

@@ -1,7 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
-import pose.Engine as Engine
+import Engine
 
 def get_data(user_video=None):
 
