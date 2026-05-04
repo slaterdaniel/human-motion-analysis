@@ -3,17 +3,18 @@ import numpy as np
 import os
 from src.pose import Engine
 
-video = '../data/training/short-boetest.mov'
+video = '../data/user_input/boetest.mov'
 cap = cv2.VideoCapture(video)
 frame_num = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 border = Engine.get_formatting()[1]
 
 print('FRAMES:', frame_num)
+print('WINDOWS:', frame_num - 1 - border * 2)
 print('BORDER:', border)
 print('Input Phase of Currently Displayed Phase\n\n')
 
 phase_labels = []
-curr_frame = border+1
+curr_frame = border
 cap.set(cv2.CAP_PROP_POS_FRAMES, curr_frame)
 
 PHASE_STRINGS = ['Right Ground Contact',
@@ -23,18 +24,16 @@ PHASE_STRINGS = ['Right Ground Contact',
                  'Left Propulsion',
                  'Left Flight']
 
-print(frame_num - 1 - border * 2)
-
 while True:
     ret, frame = cap.read()
-    if curr_frame >= frame_num - border:
+    if curr_frame >= frame_num - border - 1:
         break
 
     cv2.imshow('Labeling Utility', frame)
 
     key = cv2.waitKey(0) & 0xFF # Wait for keypress per frame
 
-    if curr_frame == border + 1:
+    if curr_frame == border:
         while True:
             print('Starting Phase:')
             if key == ord('0'):
@@ -66,7 +65,7 @@ while True:
             label = 0
         phase_labels.append(label)
         print(f'Labeled Frame {curr_frame} as "{PHASE_STRINGS[label]}"')
-        curr_frame += 10
+        curr_frame += 1
 
     elif key == ord('0'):
         phase_labels.append(label)
