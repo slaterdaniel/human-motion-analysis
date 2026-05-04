@@ -242,7 +242,7 @@ def main():
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
-    user_data, raw_data = video_processor.get_data(USER_VIDEO)
+    user_data, raw_data = video_processor.get_data(show=True, user_video=USER_VIDEO)
     raw_data = raw_data.T
 
     # Median Absolute Deviation (MAD) and medians of features in reference data

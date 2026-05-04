@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import time
 import pose.Engine as Engine
 
-def get_data(user_video=None):
+def get_data(show=False, user_video=None):
     mock_ext = MagicMock()
     mock_ext.__spec__ = MagicMock()
     sys.modules['mmcv._ext'] = mock_ext
@@ -157,9 +157,10 @@ def get_data(user_video=None):
                 user_skeleton.write(canvas)
                 user_overlay.write(frame)
 
-            cv2.imshow('MMPose Processing Preview', frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            if show:
+                cv2.imshow(f'MMPose Processing Preview: {os.path.basename(video)}', frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
             print(f"Frame: {curr_frame + 1}/{frame_count} Saved")
 

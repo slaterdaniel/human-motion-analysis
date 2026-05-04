@@ -2,9 +2,9 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import pose.Engine as Engine
+import os
 
-def get_data(user_video=None):
-
+def get_data(show=False, user_video=None):
     mp_pose = mp.solutions.pose
     pose = mp_pose.Pose(
         static_image_mode=False,
@@ -172,9 +172,10 @@ def get_data(user_video=None):
                     user_skeleton.write(canvas)
                     user_overlay.write(frame)
 
-                cv2.imshow('Mediapipe Processing Preview', frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                if show:
+                    cv2.imshow(f'Mediapipe Processing Preview: {os.path.basename(video)}', frame)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
 
                 print(f"Frame: {curr_frame + 1}/{frame_count} Saved")
 

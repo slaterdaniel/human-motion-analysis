@@ -22,25 +22,28 @@ def main():
             continue
         break
 
+    show_process = input('\nDo You Want the Skeleton Overlays to be shown during processing time? This may so down processing by ~20%\n[y/n]\n').lower()
+    show = True if show_process[0] == 'y' else False
+
     training_data = []
     raw_data = []
 
     for name in engines:
         if name == 'mediapipe':
             from pose import mediapipe_video_processor
-            training, raw = mediapipe_video_processor.get_data()
+            training, raw = mediapipe_video_processor.get_data(show)
             training_data.append(training)
             raw_data.append(raw)
 
         elif name == 'yolo26':
             from pose import yolo26_video_processor
-            training, raw = yolo26_video_processor.get_data()
+            training, raw = yolo26_video_processor.get_data(show)
             training_data.append(training)
             raw_data.append(raw)
 
         elif name == 'mmpose':
             from pose import mmpose_video_processor
-            training, raw = mmpose_video_processor.get_data()
+            training, raw = mmpose_video_processor.get_data(show)
             training_data.append(training)
             raw_data.append(raw)
 

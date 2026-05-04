@@ -4,8 +4,7 @@ import numpy as np
 import pose.Engine as Engine
 import os
 
-def get_data(user_video=None):
-
+def get_data(show=False, user_video=None):
     yolo = YOLO("../assets/yolo26x-pose.pt")
     valid_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
@@ -49,8 +48,9 @@ def get_data(user_video=None):
             project="../../outputs/videos",
             name="overlays",
             exist_ok=True,
-            show=True,
-            show_boxes=False)
+            show=show,
+            show_boxes=False,
+            stream=True)
         if user_video:
             os.rename(f"../outputs/videos/overlays/{os.path.splitext(os.path.basename(video))[0]}.mp4",
                       "../outputs/videos/overlays/full_overlay.mp4")
