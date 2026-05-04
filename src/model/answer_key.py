@@ -4,10 +4,10 @@ import os
 def create_key(show=False):
 
     labels = []
-    video_folder = "../../data/training"
+    video_folder = "../data/training"
     for filename in os.listdir(video_folder):
         if filename == ".gitkeep": continue
-        label_path = f'../../assets/labels/{os.path.splitext(os.path.basename(filename))[0]}.npy'
+        label_path = f'../assets/labels/{os.path.splitext(os.path.basename(filename))[0]}.npy'
         if os.path.isfile(label_path):
             label_array = np.load(label_path)
             labels.append(label_array)
