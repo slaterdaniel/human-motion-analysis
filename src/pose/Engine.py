@@ -41,12 +41,15 @@ def find_videos(user_video=None):
     return videos
 
 def apply_filters(video):
+    video_name = os.path.splitext(os.path.basename(video))[0]
+    if os.path.isfile(f'../assets/filtered_videos/{video_name}.mp4'):
+        return
     (
         ffmpeg
         .input(video)
         # 3. Boost contrast to help the AI see limbs against the treadmill
         .filter('eq', contrast=1.3, brightness=0.02)
-        .output('../assets/current_video.mp4', pix_fmt='yuv420p', crf=18)
+        .output(f'../assets/filtered_videos/{video_name}.mp4', pix_fmt='yuv420p', crf=18)
         .run(overwrite_output=True)
     )
 
