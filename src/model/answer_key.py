@@ -7,12 +7,12 @@ def create_key(show=False):
     video_folder = "../data/training"
     for filename in os.listdir(video_folder):
         if filename == ".gitkeep": continue
-        label_path = f'../assets/labels/{os.path.splitext(os.path.basename(filename))[0]}.npy'
+        label_path = f'../assets/training_video_labels/{os.path.splitext(os.path.basename(filename))[0]}.npy'
         if os.path.isfile(label_path):
             label_array = np.load(label_path)
             labels.append(label_array)
         else:
-            raise FileNotFoundError(f'{label_path} Could Not Be Found in assets/labels --> Create this file using utils/video_labeling.py')
+            raise FileNotFoundError(f'{label_path} Could Not Be Found in assets/video_training_labels --> Create this file using utils/video_labeling.py')
 
     key = np.concatenate(labels, axis=0).flatten()
 
@@ -26,7 +26,7 @@ def create_key(show=False):
 
 
     # boeTread_pt1.mp4:
-    # labels = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
+    # training_video_labels = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
     #           0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 5,
     #           0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
     #           0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
