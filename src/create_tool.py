@@ -53,11 +53,16 @@ def main():
     train_models(training_data, answer_key, engines)
     train_models(training_data, answer_key, engines)
 
-    phase_statistics = get_phase_statistics(training_data, raw_data, engines)
-    # phase_statistics[phase][subphase][mad/median]
+    new_phase_stats = get_phase_statistics(training_data, raw_data, engines)
+    # new_phase_stats[engine][phase][subphase][mad/median]
 
-    print(phase_statistics)
-    with open('../assets/phase_statistics.pkl', 'wb') as f:
+    print(new_phase_stats)
+    with open('../assets/phase_statistics.pkl', 'r+b') as f:
+        phase_statistics = pickle.load(f)
+        phase_statistics.update(new_phase_stats)
+
+        f.seek(0)
         pickle.dump(phase_statistics, f)
+        f.truncate()
 
 main()
