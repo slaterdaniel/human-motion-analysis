@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
+import os
+import pose.Engine as Engine
 
 # KEY:
 # rgc = right ground contact
@@ -157,24 +159,24 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     overlay_cap.release()
     skeleton_cap.release()
     out.release()
-    print(f"{file[27:]:<25} Successfully Saved")
+    print(f"{os.path.basename(file):<25} Successfully Saved")
 
 def main():
-    USER_VIDEO = "../data/user_input/short-boetest.MOV" # ***REPLACE WITH FILE OF USER VIDEO***
+    USER_VIDEO = "../data/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
 
     while True:
         engine = input("Engine to Use: ").lower()
         if engine == 'mediapipe':
             from pose import mediapipe_video_processor as video_processor
-            phase_classifier = '../assets/mediapipe_phase_classifier.keras'
+            phase_classifier = '../assets/phase_classifier_models/mediapipe_phase_classifier.keras'
             break
         elif engine == 'yolo26':
             from pose import yolo26_video_processor as video_processor
-            phase_classifier = '../assets/yolo26_phase_classifier.keras'
+            phase_classifier = '../assets/phase_classifier_models/yolo26_phase_classifier.keras'
             break
         elif engine == 'mmpose':
             from pose import mmpose_video_processor as video_processor
-            phase_classifier = '../assets/mmpose_phase_classifier.keras'
+            phase_classifier = '../assets/phase_classifier_models/mmpose_phase_classifier.keras'
             break
         else:
             print("Invalid Engine Inputted. Try Again.\n")
@@ -242,7 +244,7 @@ def main():
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
-    user_data, raw_data = video_processor.get_data(show=True, user_video=USER_VIDEO)
+    user_data, raw_data = video_processor.get_data(show=False, user_video=USER_VIDEO)
     raw_data = raw_data.T
 
     # Median Absolute Deviation (MAD) and medians of features in reference data
@@ -251,7 +253,7 @@ def main():
 
     model = load_model(phase_classifier, compile=False) # 1D CNN to predict phases
     user_predictions = np.argmax(model.predict(user_data), axis=1) # predict the phases from users data
-    print(f'\n{user_predictions}\n')
+    print(f'\nPhase Predictions:\n{user_predictions}\n')
 
     # Ground Contact Data
     rgc_starts = []
@@ -384,7 +386,7 @@ def main():
             if (phase == 0 or phase == 3) and phase != last_phase: # Count rep when left or right foot hits the ground
                 count += 1
             last_phase = phase
-        strides_per_sec.append(count * window // (end-start)) # Adjust count to window size
+        strides_per_sec.append(count * window / (end-start)) # Adjust count to window size
 
     # phases are deemed "faulty" when the mean of the sum of the features squared z scores
     # in a given phase are in higher than the 95th percentile of phase z scores
@@ -605,44 +607,45 @@ Seconds: {left_contact_lengths / 30}
     print(f"{'Stride Frequency Data':<25} Successfully Saved\n")
 
     print("Saving Phase Overlay Videos:")
+    save_path = '../outputs/videos/overlays/'
 
     # Save user_input of each phase's best instance overlaid on the worst instance
-    save_video('../outputs/videos/overlays/Right_Ground_Contact.mp4',
+    save_video(save_path + 'Right_Ground_Contact.mp4',
                phase_scores[rgc_phase_index][:, 1][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_scores[rgc_phase_index][:, 1][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlays/Right_Propulsion.mp4',
+    save_video(save_path + 'Right_Propulsion.mp4',
                phase_scores[rp_phase_index][:, 1][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_scores[rp_phase_index][:, 1][np.argmin(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmin(phase_scores[rp_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlays/Right_Flight.mp4',
+    save_video(save_path + 'Right_Flight.mp4',
                phase_scores[rf_phase_index][:, 1][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_scores[rf_phase_index][:, 1][np.argmin(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmin(phase_scores[rf_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlays/Left_Ground_Contact.mp4',
+    save_video(save_path + 'Left_Ground_Contact.mp4',
                phase_scores[lgc_phase_index][:, 1][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_scores[lgc_phase_index][:, 1][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlays/Left_Propulsion.mp4',
+    save_video(save_path + 'Left_Propulsion.mp4',
                phase_scores[lp_phase_index][:, 1][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_scores[lp_phase_index][:, 1][np.argmin(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmin(phase_scores[lp_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-    save_video('../outputs/videos/overlays/Left_Flight.mp4',
+    save_video(save_path + 'Left_Flight.mp4',
                phase_scores[lf_phase_index][:, 1][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_scores[lf_phase_index][:, 1][np.argmin(phase_scores[lf_phase_index][:, 0])],

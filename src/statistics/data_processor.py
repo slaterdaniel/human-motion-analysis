@@ -94,7 +94,7 @@ def get_phase_statistics(reference_data, ref_raw_data, engines):
     stats = {}
 
     for data, raw, name in zip(reference_data, ref_raw_data, engines):
-        model = load_model(f'../assets/{name}_phase_classifier.keras', compile=False)
+        model = load_model(f'../assets/models/{name}_phase_classifier.keras', compile=False)
         reference_predictions = np.argmax(model.predict(data), axis=1)
 
         # save raw data by phase while being grouped by feature
