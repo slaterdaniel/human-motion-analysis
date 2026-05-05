@@ -50,4 +50,4 @@ def create_models(engines):
             model = model_format(window_size, num_features)
 
         model.summary()
-        model.save(f'../assets/{name}_phase_classifier.keras')
+        model.save(f'../assets/phase_classifier_models/{name}_phase_classifier.keras')

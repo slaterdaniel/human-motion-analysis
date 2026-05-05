@@ -248,7 +248,7 @@ def main():
     raw_data = raw_data.T
 
     # Median Absolute Deviation (MAD) and medians of features in reference data
-    with open('../assets/phase_statistics.pkl', 'rb') as f:
+    with open('../assets/phase_statistics/phase_statistics.pkl', 'rb') as f:
         phase_stats = pickle.load(f)
 
     model = load_model(phase_classifier, compile=False) # 1D CNN to predict phases
