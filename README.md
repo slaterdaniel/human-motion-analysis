@@ -19,14 +19,15 @@ The long-term goal is to support applications in athletic performance analysis, 
   <tr>
     <td width="50%">
       <p align="center"><b>Input & Skeleton Overlay</b></p>
-      <video src="https://github.com/user-attachments/assets/0a48a3e5-2c76-49d6-a43a-23385fc90178" width="100%" controls></video>
+      <video src="https://github.com/user-attachments/assets/0a48a3e5-2c76-49d6-a43a-23385fc90178" width="50%" controls></video>
     </td>
     <td width="50%">
-      <p align="center"><b>Biomechanical Dashboard</b></p>
-      <video src="https://github.com/user-attachments/assets/df15a9af-0605-47f5-8c3b-b13d7cf5da6c" width="100%" controls></video>
+      <p align="center"><b>Biomechanical Dashboard (Annotated) </b></p>
+      <video src="https://github.com/user-attachments/assets/df15a9af-0605-47f5-8c3b-b13d7cf5da6c" width="50%" controls></video>
     </td>
   </tr>
 </table>
+
 
 
 ### Output:
