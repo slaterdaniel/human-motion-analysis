@@ -18,4 +18,4 @@ Sprint_Analysis
 *.png
 *.txt
 
-!docs/
+!docs/*.mp4
