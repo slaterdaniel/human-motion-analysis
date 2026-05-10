@@ -19,15 +19,19 @@ The long-term goal is to support applications in athletic performance analysis, 
   <tr>
     <td width="50%">
       <p align="center"><b>Input & Skeleton Overlay</b></p>
-      <video src="https://github.com/user-attachments/assets/0a48a3e5-2c76-49d6-a43a-23385fc90178" width="50%" controls></video>
+      <video src="https://github.com/user-attachments/assets/624b0c33-01cf-457a-b329-eabef0ab66b9" width="50%" controls></video>
     </td>
     <td width="50%">
       <p align="center"><b>Biomechanical Dashboard (Annotated) </b></p>
-      <video src="https://github.com/user-attachments/assets/df15a9af-0605-47f5-8c3b-b13d7cf5da6c" width="50%" controls></video>
+      <video src="https://github.com/user-attachments/assets/7e5ee360-6ffe-48e4-9887-f4fd103ee66f" width="50%" controls></video>
     </td>
   </tr>
 </table>
 
+***NOTICE:*** 
+
+In dashboard video (pictured right), the large spike in *Total Form Deviation* at ~11sec aligns with form error of athletes left arm being raised 
+This validates the ability of the pipeline to identify abnomalities in running form.
 
 
 ### Output:
