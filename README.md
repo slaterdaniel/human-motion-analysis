@@ -31,8 +31,18 @@ The long-term goal is to support applications in athletic performance analysis, 
 ***NOTICE:*** 
 
 In dashboard video (pictured right), the large spike in *Total Form Deviation* at ~11sec aligns with form error of athletes left arm being raised 
-This validates the ability of the pipeline to identify abnomalities in running form.
+This validates the ability of the pipeline to identify abnormalities in running form.
+
+## Outputted Metrics:
+| Metric                     | Example Output |
+|----------------------------|----------------|
+| Dashboard Video            |                |
+| Phase Overlay Videos       |                |
+| Ground Contact Stats       |                |
+| Stride Frequency Stats     |                |
+| Feature Deviation Tracking |                |
+| Phase Stats                |                |
+| Phase Breakdown Isolation  |                |
+| Phase Deviation Tracking   |                |
 
 
-### Output:
-[future explanation of what the output is]
