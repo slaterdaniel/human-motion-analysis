@@ -49,8 +49,7 @@ def get_data(show=False, user_video=None):
             name="overlays",
             exist_ok=True,
             show=show,
-            show_boxes=False,
-            stream=True)
+            show_boxes=False)
         if user_video:
             os.rename(f"../outputs/videos/overlays/{os.path.splitext(os.path.basename(video))[0]}.mp4",
                       "../outputs/videos/overlays/full_overlay.mp4")
@@ -130,13 +129,20 @@ def get_data(show=False, user_video=None):
                 canvas = np.zeros((height, width, 3), dtype=np.uint8)
 
                 # Draw user skeleton on blank canvas
+                drawn = set()
                 for i, (pt1, pt2) in enumerate(connections):
                     lm1, lm2 = current_pose[pt1], current_pose[pt2]
 
                     lm1 = int(lm1[0] - center_x + (width / 2)), int(lm1[1] - center_y + (height / 2))
                     lm2 = int(lm2[0] - center_x + (width / 2)), int(lm2[1] - center_y + (height / 2))
 
-                    cv2.line(canvas, lm1, lm2, (255, 255, 255), 2)
+                    cv2.line(canvas, lm1, lm2, (255, 255, 255), 5)
+                    if lm1 not in drawn:
+                        cv2.circle(canvas, (int(lm1[0]), int(lm1[1])), 8, (255, 255, 255), -1)
+                        drawn.add(lm1)
+                    if lm2 not in drawn:
+                        cv2.circle(canvas, (int(lm2[0]), int(lm2[1])), 8, (255, 255, 255), -1)
+                        drawn.add(lm2)
 
                 user_skeleton.write(canvas)
 

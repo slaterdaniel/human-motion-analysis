@@ -129,6 +129,9 @@ def get_data(show=False, user_video=None):
                 data[curr_frame, 20 + i * 2] = x
                 data[curr_frame, 21 + i * 2] = y
 
+            cv2.circle(frame, keypoints[9].astype(int), 5, tuple(map(int, connection_colors[10])), -1)
+            cv2.circle(frame, keypoints[10].astype(int), 5, tuple(map(int, connection_colors[11])), -1)
+
             if user_video:
                 # Initialize blank canvas
                 canvas = np.zeros((height, width, 3), dtype=np.uint8)
@@ -139,10 +142,8 @@ def get_data(show=False, user_video=None):
                 cv2.circle(canvas, rhand, 5, (255, 255, 255), -1)
                 cv2.circle(canvas, lhand, 5, (255, 255, 255), -1)
 
-            cv2.circle(frame, keypoints[9].astype(int), 5, tuple(map(int, connection_colors[10])), -1)
-            cv2.circle(frame, keypoints[10].astype(int), 5, tuple(map(int, connection_colors[11])), -1)
-
             # Draw skeleton connection
+            drawn = set()
             for i, (pt1, pt2) in enumerate(connections):
                 lm1, lm2 = keypoints[pt1].astype(int), keypoints[pt2].astype(int)
                 color = tuple(map(int, connection_colors[i]))
@@ -151,7 +152,16 @@ def get_data(show=False, user_video=None):
                 if user_video:
                     lm1 = int(lm1[0] - center_x + (width / 2)), int(lm1[1] - center_y + (height / 2))
                     lm2 = int(lm2[0] - center_x + (width / 2)), int(lm2[1] - center_y + (height / 2))
-                    cv2.line(canvas, lm1, lm2, (255, 255, 255), 2)
+                    cv2.line(canvas, lm1, lm2, (255, 255, 255), 5)
+                    if lm1 not in drawn:
+                        cv2.circle(canvas, lm1, 8, (255, 255, 255), -1)
+                        drawn.add(lm1)
+                    if lm2 not in drawn:
+                        cv2.circle(canvas, lm2, 8, (255, 255, 255), -1)
+                        drawn.add(lm2)
+
+                    cv2.circle(canvas, lm2, 10, (255, 255, 255), -1)
+
 
             if user_video:
                 user_skeleton.write(canvas)

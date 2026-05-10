@@ -135,6 +135,7 @@ def get_data(show=False, user_video=None):
 
                 if user_video:
                     canvas = np.zeros((height, width, 3), dtype=np.uint8)
+                    drawn = set()
 
                 for connection in mp_pose.POSE_CONNECTIONS:
                     start = connection[0]
@@ -166,7 +167,13 @@ def get_data(show=False, user_video=None):
                         # x2 = int((x2 / 3 + 0.5) * width)
                         # y2 = int((y2 / 3 + 0.5) * height)
 
-                        cv2.line(canvas, (x1, y1), (x2, y2), (255, 255, 255), 2)
+                        cv2.line(canvas, (x1, y1), (x2, y2), (255, 255, 255), 5)
+                        if (x1, y1) not in drawn:
+                            cv2.circle(canvas, (x1, y1), 8, (255, 255, 255), -1)
+                            drawn.add((x1, y1))
+                        if (x2, y2) not in drawn:
+                            cv2.circle(canvas, (x2, y2), 8, (255, 255, 255), -1)
+                            drawn.add((x2, y2))
 
                 if user_video:
                     user_skeleton.write(canvas)
