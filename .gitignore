@@ -17,3 +17,5 @@ Sprint_Analysis
 *.pkl
 *.png
 *.txt
+
+!docs/
