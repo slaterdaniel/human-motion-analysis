@@ -3,8 +3,11 @@ import cv2
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.ticker import FuncFormatter
+import plotly.graph_objects as go
 import os
-import pose.Engine as Engine
+from pose import Engine
 
 # KEY:
 # rgc = right ground contact
@@ -14,11 +17,11 @@ import pose.Engine as Engine
 # lp  = left propulsion phase
 # lf  = left flight phase
 
-def find_phase_scores(phase, user_predictions, window_size=9):
+def find_phase_scores(frame_scores, user_predictions, window_size=9):
     """
     Finds phase scores of the users data
     Args:
-        phase: numpy array of features z scores where: rows = features, columns = frame
+        frame_scores: numpy array of features z scores where: rows = features, columns = frame
         user_predictions: numpy array of the model's predictions of which phase the user is in for each frame
         window_size: window size of 1d cnn neural network
     Returns:
@@ -43,7 +46,7 @@ def find_phase_scores(phase, user_predictions, window_size=9):
     progress = 0
     total_scores = []
     for length in phase_lengths:
-        score = np.sum(phase[:, progress:progress + length] ** 2)
+        score = np.sum(frame_scores[:, progress:progress + length] ** 2)
         total_scores.append((score / length, progress + (window_size//2)))
         progress += length
 
@@ -90,8 +93,17 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     best_start_frame = best_frame - offset
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out_dims = (width*2, height) if vertical else (width, height*2)
+    if vertical:
+        feedback_column_dims = height, 250
+        out_dims = width * 2 + 250, height
+    else:
+        feedback_column_dims = 250, width
+        out_dims = width, height*2 + 250
+
+    # feedback_column_dims = 250, height if vertical else width, 250
+    # out_dims = (width*2 + feedback_column_dims[0], height) if vertical else (width + feedback_column_dims[1], height*2)
     out = cv2.VideoWriter(file, fourcc, fps, out_dims)
+    feedback_box = np.zeros((*feedback_column_dims, 3), dtype=np.uint8)
     worst = []
     user_overlay = []
 
@@ -113,34 +125,62 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
         frame_scores = scored_data[:, curr_frame - border]
         score = round(np.sum(frame_scores ** 2), 1)
-        biggest_mistake = np.argmax(frame_scores)
+        biggest_mistake = np.argmax(np.abs(frame_scores))
 
         error_value = round(raw_data[biggest_mistake, curr_frame - border], 2)
         reference_value = round(raw_data[biggest_mistake, int(best_start_frame + i) - border], 2)
 
-        cv2.putText(skeleton_frame,
-                    f"Phase: {PHASE_STRINGS[user_predictions[curr_frame - border]]}",
-                    (int(width * .7), int(height * .45)), font, 1, color, 2, style)
+        skeleton_frame = cv2.hconcat([skeleton_frame, feedback_box]) if vertical else cv2.vconcat([skeleton_frame, feedback_box])
 
-        cv2.putText(skeleton_frame,
-                    f"Score: {score}",
-                    (int(width * .7), int(height * .5)), font, 1, color, 2, style)
+        if vertical:
+            cv2.putText(skeleton_frame,
+                        f"Phase: {PHASE_STRINGS[user_predictions[curr_frame - border]]}",
+                        (int(width * .8), int(height * .45)), font, 1, color, 2, style)
 
-        cv2.putText(skeleton_frame,
-                    f"{FEATURE_STRINGS[biggest_mistake]}:",
-                    (int(width * .7), int(height * .6)), font, 1, (255, 255, 255), 2, style)
+            cv2.putText(skeleton_frame,
+                        f"Score: {score}",
+                        (int(width * .8), int(height * .5)), font, 1, color, 2, style)
 
-        cv2.putText(skeleton_frame,
-                    f"{'Error:':<8} {error_value:<8} Frame: {curr_frame + 1}",
-                    (int(width * .7), int(height * .65)), font, 1, (127,127,255), 2, style)
+            cv2.putText(skeleton_frame,
+                        f"{FEATURE_STRINGS[biggest_mistake]}:",
+                        (int(width * .8), int(height * .6)), font, 1, (255, 255, 255), 2, style)
 
-        cv2.putText(skeleton_frame,
-                    f"{'Ref:':<8} {reference_value:<8} Frame: {int(best_start_frame + i + 1)}",
-                    (int(width * .7), int(height * .7)), font, 1, (127, 255, 127), 2, style)
+            cv2.putText(skeleton_frame,
+                        f"{'Error:':<8} {error_value:<8} Frame: {curr_frame + 1}",
+                        (int(width * .8), int(height * .65)), font, 1, (127,127,255), 2, style)
 
-        cv2.putText(skeleton_frame,
-                    f"{'% Error:':<8} {round((error_value - reference_value) * 100 / (reference_value + 1e-8), 2)}%",
-                    (int(width * .7), int(height * .75)), font, 1, (127, 255, 255), 2, style)
+            cv2.putText(skeleton_frame,
+                        f"{'Ref:':<8} {reference_value:<8} Frame: {int(best_start_frame + i + 1)}",
+                        (int(width * .8), int(height * .7)), font, 1, (127, 255, 127), 2, style)
+
+            cv2.putText(skeleton_frame,
+                        f"{'% Error:':<8} {round((error_value - reference_value) * 100 / (reference_value + 1e-8), 2)}%",
+                        (int(width * .8), int(height * .75)), font, 1, (127, 255, 255), 2, style)
+        else:
+            cv2.putText(skeleton_frame,
+                        f"Phase: {PHASE_STRINGS[user_predictions[curr_frame - border]]}",
+                        (int(width * .25), int(height * .975)), font, 1, color, 2, style)
+
+            cv2.putText(skeleton_frame,
+                        f"Score: {score}",
+                        (int(width * .25), int(height * 1.05)), font, 1, color, 2, style)
+
+            cv2.putText(skeleton_frame,
+                        f"{FEATURE_STRINGS[biggest_mistake]}:",
+                        (int(width * .55), int(height * .925)), font, 1, (255, 255, 255), 2, style)
+
+            cv2.putText(skeleton_frame,
+                        f"{'Error:':<8} {error_value:<8} Frame: {curr_frame + 1}",
+                        (int(width * .55), int(height * .975)), font, 1, (127, 127, 255), 2, style)
+
+            cv2.putText(skeleton_frame,
+                        f"{'Ref:':<8} {reference_value:<8} Frame: {int(best_start_frame + i + 1)}",
+                        (int(width * .55), int(height*1.05)), font, 1, (127, 255, 127), 2, style)
+
+            cv2.putText(skeleton_frame,
+                        f"{'% Error:':<8} {round((error_value - reference_value) * 100 / (reference_value + 1e-8), 2)}%",
+                        (int(width * .55), int(height * 1.125)), font, 1, (127, 255, 255), 2, style)
+
         user_overlay.append(overlay_frame)
         worst.append(skeleton_frame)
 
@@ -150,6 +190,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
         if not ret:
             break
         frame = np.clip(frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
+        frame = cv2.hconcat([frame, feedback_box]) if vertical else cv2.vconcat([frame, feedback_box])
         skeleton_overlay = cv2.addWeighted(worst[i], 1, frame, 1, 0)
 
         concatenate = cv2.hconcat if vertical else cv2.vconcat
@@ -287,14 +328,14 @@ def main():
 
     scored_data = np.zeros(raw_data.shape) # initialize empty array for storing scored user data
 
-    phase_strings = {
-        0: "rgc",
-        1: "rp",
-        2: "rf",
-        3: "lgc",
-        4: "lp",
-        5: "lf"
-    }
+    phase_strings = [
+        "rgc",
+        "rp",
+        "rf",
+        "lgc",
+        "lp",
+        "lf"
+    ]
     last = user_predictions[0]
     length = 0 # phase length
 
@@ -318,17 +359,17 @@ def main():
             # save MAD Z-score of subphases
             # "early" subphase
             scored_data[:, start:start + base] = (
-                    0.6745 * np.abs(raw_data[:, start:start + base] - phase_stats[engine][phase]["early"]["median"])
+                    0.6745 * (raw_data[:, start:start + base] - phase_stats[engine][phase]["early"]["median"])
                     / phase_stats[engine][phase]["early"]["mad"])
 
             # "middle" subphase
             scored_data[:, start + base:start + base * 2 + remainder] = (
-                    0.6745 * np.abs(raw_data[:, start + base : start + base * 2 + remainder] - phase_stats[engine][phase]["middle"]["median"])
+                    0.6745 * (raw_data[:, start + base : start + base * 2 + remainder] - phase_stats[engine][phase]["middle"]["median"])
                     / phase_stats[engine][phase]["middle"]["mad"])
 
             # "late" subphase
             scored_data[:, start + base * 2 + remainder:i] = (
-                    0.6745 * np.abs(raw_data[:, start + base * 2 + remainder : start + length] - phase_stats[engine][phase]["late"]["median"])
+                    0.6745 * (raw_data[:, start + base * 2 + remainder : start + length] - phase_stats[engine][phase]["late"]["median"])
                     / phase_stats[engine][phase]["late"]["mad"])
 
             length = 1
@@ -340,6 +381,7 @@ def main():
 
     # Score each feature across each frame using MAD Z score
     phase_scores, phase_lengths = find_phase_scores(scored_data, user_predictions)
+    np.save('../assets/test_data.npy', phase_scores)
 
     # Create array of the order each phase appears throughout the user's video
     phase_order = [user_predictions[0]]
@@ -359,6 +401,47 @@ def main():
     lgc_phase_index = phase_order == 3
     lp_phase_index  = phase_order == 4
     lf_phase_index  = phase_order == 5
+
+    # Find how user form breaks down by taking the median of
+    # the 10 "worst" scored instances of each phase on a radar graph
+    rgc_breakdown = phase_scores[rgc_phase_index, 0]
+    rgc_breakdown.sort()
+    rgc_breakdown = np.mean(rgc_breakdown[-3:]) / rgc_breakdown[0]
+
+    rp_breakdown = phase_scores[rp_phase_index, 0]
+    rp_breakdown.sort()
+    rp_breakdown = np.mean(rp_breakdown[-3:]) / rp_breakdown[0]
+
+    rf_breakdown = phase_scores[rf_phase_index, 0]
+    rf_breakdown.sort()
+    rf_breakdown = np.mean(rf_breakdown[-3:]) / rf_breakdown[0]
+
+    lgc_breakdown = phase_scores[lgc_phase_index, 0]
+    lgc_breakdown.sort()
+    lgc_breakdown = np.mean(lgc_breakdown[-3:]) / lgc_breakdown[0]
+
+    lp_breakdown = phase_scores[lp_phase_index, 0]
+    lp_breakdown.sort()
+    lp_breakdown = np.mean(lp_breakdown[-3:]) / lp_breakdown[0]
+
+    lf_breakdown = phase_scores[lf_phase_index, 0]
+    lf_breakdown.sort()
+    lf_breakdown = np.mean(lf_breakdown[-3:]) / lf_breakdown[0]
+
+    print(f"{'Phase Breakdown Data':<25} Successfully Saved\n")
+
+    # Phase Z-Scores over time
+    plt.figure(figsize=(18, 5))
+    plt.plot(phase_scores[rgc_phase_index, 0], label='Right Ground Contact')
+    plt.plot(phase_scores[rp_phase_index, 0], label='Right Propulsion')
+    plt.plot(phase_scores[rf_phase_index, 0], label='Right Flight')
+    plt.plot(phase_scores[lgc_phase_index, 0], label='Left Ground Contact')
+    plt.plot(phase_scores[lp_phase_index, 0], label='Left Propulsion')
+    plt.plot(phase_scores[lf_phase_index, 0], label='Left Flight')
+    plt.xlabel('Rep #')
+    plt.ylabel('Phase Z-Score')
+    plt.legend()
+    plt.savefig('../outputs/graphs/phase_breakdown/Phase_Z-Scores.png', dpi=300)
 
     # Create array of the indexes of each rep as they appear in the user's video
     rep_index = []
@@ -410,18 +493,18 @@ def main():
     with open('../outputs/metrics/Right_Ground_Contact.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-          
+
           f"Right Ground Contact:\n\n"
-          
+
           f"Phase Scores:\n"
           f"{phase_scores[rgc_phase_index][:, 0]}\n\n"
-          
+
           f"Faulty Reps:\n"
           f"{rep_index[rgc_phase_index][faulty_phases[rgc_phase_index]]}\n\n"
-          
+
           f"Faulty Rep Frames:\n"
           f"{faulty_phase_frames[0]}"
-    
+
           f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
         )
     print(f"{'Right_Ground_Contact.txt':<25} Successfully Saved")
@@ -486,18 +569,18 @@ def main():
     with open('../outputs/metrics/Left_Propulsion.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-    
+
           f"Left Propulsion:\n\n"
-          
+
           f"Phase Scores:\n"
           f"{phase_scores[lp_phase_index][:, 0]}\n\n"
-          
+
           f"Faulty Reps:\n"
           f"{rep_index[lp_phase_index][faulty_phases[lp_phase_index]]}\n\n"
-          
+
           f"Faulty Rep Frames:\n"
           f"{faulty_phase_frames[4]}"
-    
+
           f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
         )
     print(f"{'Left_Propulsion.txt':<25} Successfully Saved")
@@ -505,18 +588,18 @@ def main():
     with open('../outputs/metrics/Left_Flight.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-    
+
           f"Left Flight:\n\n"
-          
+
           f"Phase Scores:"
           f"\n{phase_scores[lf_phase_index][:, 0]}\n\n"
-          
+
           f"Faulty Reps:\n"
           f"{rep_index[lf_phase_index][faulty_phases[lf_phase_index]]}\n\n"
-          
+
           f"Faulty Rep Frames:"
           f"\n{faulty_phase_frames[5]}"
-    
+
           f"\n\n-------------------------------------------------------------------------------------------------------------"
         )
     print(f"{'Left_Flight.txt':<25} Successfully Saved\n")
@@ -527,9 +610,9 @@ def main():
         f.write(
             f"""
     ----------------
-    STRIDE FREQUENCY 
+    STRIDE FREQUENCY
     ----------------
-    
+
 {steps_per_minute:.3f} Steps per Minute
 
     ---------------------
@@ -541,6 +624,9 @@ Average Right Ground Strike Point:
 
 Average Left Ground Strike Point:
 {np.mean(left_contacts)}
+
+Average Strike Point Imbalance: (negative = left | positive = right)
+{np.mean(right_contacts) - np.mean(left_contacts)}
 
 
 Right Ground Striking Points:
@@ -578,9 +664,17 @@ Seconds: {left_contact_lengths / 30}
     print(f"{'Ground_Contact_Timing.txt':<25} Successfully Saved\n")
 
     # Save Graphs of each features scores over time
-    print("Saving Z-score Graphs of each feature\n")
+    print("Saving Z-score Graphs\n")
+    plt.figure(figsize=(18, 5))
+    plt.title('Phase Z-Scores')
+    plt.xlabel("Phase #")
+    plt.ylabel("Z-Score")
+    plt.plot(phase_scores[:, 0], color='b', label='Score')
+    plt.savefig("../outputs/graphs/phase_breakdown/Total_Z-Score.png", dpi=300)
+    plt.close()
+
     for i in range(len(scored_data)):
-        plt.figure(i+1, figsize=(18, 5))
+        plt.figure(figsize=(18, 5))
         plt.title(FEATURE_STRINGS[i])
         plt.xlabel("Frames")
         plt.ylabel("Z Scores")
@@ -594,17 +688,32 @@ Seconds: {left_contact_lengths / 30}
         plt.plot(ema, color='r', label="EMA Trend")
 
         plt.legend()
-        # plt.savefig(f"../outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
+        plt.savefig(f"../outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
         plt.close()
 
     print("Saving Stride Frequency Data:")
-    plt.figure(0, figsize=(18, 5))
+    plt.figure(figsize=(18, 5))
     plt.plot(strides_per_sec, label="Strides per Second")
     plt.title("Stride Frequency")
+    plt.ylim(0, None)
     plt.xlabel("Frames")
     plt.ylabel("Strides/Second")
     plt.savefig("../outputs/graphs/Stride_Frequency/Stride_Frequency.png", dpi=300)
     print(f"{'Stride Frequency Data':<25} Successfully Saved\n")
+
+    print('Saving Phase Breakdown Data:')
+    phase_score_fig = go.Figure()
+    phase_score_fig.add_trace(go.Scatterpolar(
+        r=[rgc_breakdown, rp_breakdown, rf_breakdown, lgc_breakdown, lp_breakdown, lf_breakdown, rgc_breakdown],
+        theta=['Right Ground Contact', 'Right Propulsion', 'Right Flight',
+              'Left Ground Contact', 'Left Propulsion', 'Left Flight', 'Right Ground Contact'],
+        fill='toself',
+        name='Phase Breakdown',
+        line_color='red'
+    ))
+    # phase_score_fig.write_html('../outputs/graphs/phase_averages.html', auto_open=False) # <-- USE HTML FOR FINAL PRODUCT
+    phase_score_fig.write_image('../outputs/graphs/phase_breakdown/phase_breakdown_comparison.png', width=800, height=600, scale=2)
+    print(f"{'Phase Breakdown Data':<25} Successfully Saved\n")
 
     print("Saving Phase Overlay Videos:")
     save_path = '../outputs/videos/overlays/'
@@ -651,5 +760,164 @@ Seconds: {left_contact_lengths / 30}
                phase_scores[lf_phase_index][:, 1][np.argmin(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmin(phase_scores[lf_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
+
+#     DEMO OUTPUT
+    PHASE_STRINGS = ['Right Ground Contact',
+                     'Right Propulsion',
+                     'Right Flight',
+                     'Left Ground Contact',
+                     'Left Propulsion',
+                     'Left Flight']
+
+    feature_colors = {
+        'red': [(64, 64, 255), (96, 96, 255), (128, 128, 255), (160, 160, 255), (192, 192, 255)],
+        'yellow': [(64, 255, 255), (96, 255, 255), (128, 255, 255), (160, 255, 255), (192, 255, 255)],
+        'green': [(64, 255, 64), (96, 255, 96), (128, 255, 128), (160, 255, 160), (192, 255, 192)]
+    }
+
+    overlay_cap = cv2.VideoCapture(f'../outputs/videos/overlays/full_overlay.mp4')
+    skeleton_cap = cv2.VideoCapture(f'../outputs/videos/user_skeleton/user_skeleton.mp4')
+    width = int(overlay_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(overlay_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    overlay_cap.set(cv2.CAP_PROP_POS_FRAMES, Engine.get_formatting()[1])
+    skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, Engine.get_formatting()[1])
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    demo = cv2.VideoWriter('../outputs/videos/dashboard/dashboard.mp4', fourcc, 3, (width, height))
+    canvas = np.zeros((height, width*2, 3), dtype=np.uint8)
+
+    plt.style.use('dark_background')  # Looks better in tech demos
+    fig, ax = plt.subplots(figsize=(11, 5.5), dpi=100)
+
+    graph = FigureCanvasAgg(fig)
+    x_data = np.arange(30)  # Showing a 30-frame window
+    line, = ax.plot(x_data, np.zeros(30), color='b', lw=3)
+
+    frame_scores = np.sum(scored_data ** 2, axis=0)
+    y_max = max(frame_scores)
+    y_green = int(np.percentile(frame_scores, 80))
+    y_yellow = int(np.percentile(frame_scores, 95))
+
+    green_zone = range(y_green)
+    yellow_zone = range(y_green, y_yellow)
+
+    ax.set_ylim(0, y_max)
+    ax.axhspan(0, y_green, facecolor=(0.71, 0.84, 0.66), zorder=0)  # Bottom 1/3 (Safe)
+    ax.axhspan(y_green, y_yellow, facecolor=(1.0, 0.9, 0.6), zorder=0)  # Middle 1/3 (Warning)
+    ax.axhspan(y_yellow, y_max, facecolor=(0.92, 0.6, 0.6), zorder=0)
+
+    fps = 30
+
+    def phase_to_seconds(x, pos):
+        if x in range(len(user_predictions)):
+            return f'{x / fps:.2f}s | {phase_strings[user_predictions[int(x)]].upper()}'
+        else:
+            return f'{x / fps:.2f}s'
+
+    # Set up the formatter on your existing ax
+    ax.xaxis.set_major_formatter(FuncFormatter(phase_to_seconds))
+    ax.set_xlabel("Time (Seconds) | Phase", fontsize=14, fontweight='bold')
+    ax.set_ylabel("Total Form Deviation - Σ(MAD^2)", fontsize=14, fontweight='bold')
+    ax.tick_params(axis='x', labelsize=12)
+    ax.tick_params(axis='y', labelsize=12)
+
+    lih = []
+    for frame, (pred1, pred2) in enumerate(zip(user_predictions, user_predictions[1:])):
+        if pred1 != pred2:
+            lih.append(frame)
+        else:
+            lih.append(None)
+
+    for frame in range(len(user_predictions)):
+        ret1, overlay_frame = overlay_cap.read()
+        ret2, skeleton_frame = skeleton_cap.read()
+
+        frame_score = int(np.sum(scored_data[:, frame] ** 2, axis=0))
+
+        if frame_score in green_zone:
+            zone = 'green'
+            skeleton_frame = np.clip(skeleton_frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
+        elif frame_score in yellow_zone:
+            zone = 'yellow'
+            skeleton_frame = np.clip(skeleton_frame * [0.5, 1, 1], 0, 255).astype(np.uint8)
+        else:
+            zone = 'red'
+            skeleton_frame = np.clip(skeleton_frame * [0.5, 0.5, 1], 0, 255).astype(np.uint8)
+
+        top_half = cv2.hconcat([overlay_frame, skeleton_frame])
+        full_screen = cv2.vconcat([top_half, canvas])
+
+        cv2.putText(full_screen, 'Current Phase:',
+                    (int(width * 2 * .025), int(height * 2 * .5275)), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 255, 255), 2,
+                    cv2.LINE_AA)
+
+        cv2.putText(full_screen, PHASE_STRINGS[user_predictions[frame]],
+                    (int(width*2 * .025), int(height*2 * .5925)), cv2.FONT_HERSHEY_SIMPLEX, 6, (255,255,255), 15, cv2.LINE_AA)
+
+        start = max(0, frame-30)
+        scores = list(np.sum(scored_data[:, start+1:frame+1] ** 2, axis=0))
+        scores = [0 for _ in range(30 - len(scores))] + scores
+
+        line.set_ydata(scores)
+        line.set_xdata(np.arange(frame-29, frame+1))
+        ax.set_xlim(frame - 30, frame+1)
+
+        for line_obj in ax.get_lines()[1:]:  # Keep the first line (the data plot)
+            line_obj.remove()
+
+        piece = [0 for _ in range(30 - len(lih[start:frame]))] + lih[start:frame]
+        for coord in piece:
+            if coord:
+                ax.axvline(coord, linewidth=0.75, color='black')
+
+        ax.axvline(frame, linewidth=2, color='r')
+
+        graph.draw()
+        rgba_buffer = graph.buffer_rgba()
+        graph_img = np.asarray(rgba_buffer)
+        graph_img = cv2.cvtColor(graph_img, cv2.COLOR_RGBA2BGR)
+        h, w = graph_img.shape[:2]
+        full_screen[int(height*1.25):int(height*1.25) + h, :w] = graph_img
+
+        error_index = np.argsort(np.abs(scored_data[:, frame]))[-5:][::-1]
+
+        cv2.putText(full_screen,
+                    'Greatest Feature Errors:',
+                    (int(width*2 * .71), int(height * 1.35)), cv2.FONT_HERSHEY_SIMPLEX, 1.75, (255,255,255), 2, cv2.LINE_AA)
+
+        sign = '(+)' if scored_data[error_index[0], frame] >= 0 else '(-)'
+
+        cv2.putText(full_screen,
+                    f'1. {FEATURE_STRINGS[error_index[0]]} {sign}',
+                    (int(width*2 * .71), int(height * 1.425)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][0], 2, cv2.LINE_AA)
+
+        sign = '(+)' if scored_data[error_index[1], frame] >= 0 else '(-)'
+
+        cv2.putText(full_screen,
+                    f'2. {FEATURE_STRINGS[error_index[1]]} {sign}',
+                    (int(width*2 * .71), int(height * 1.475)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][1], 2, cv2.LINE_AA)
+
+        sign = '(+)' if scored_data[error_index[2], frame] >= 0 else '(-)'
+
+        cv2.putText(full_screen,
+                    f'3. {FEATURE_STRINGS[error_index[2]]} {sign}',
+                    (int(width*2 * .71), int(height * 1.525)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][2], 2, cv2.LINE_AA)
+
+        sign = '(+)' if scored_data[error_index[3], frame] >= 0 else '(-)'
+
+        cv2.putText(full_screen,
+                    f'4. {FEATURE_STRINGS[error_index[3]]} {sign}',
+                    (int(width*2 * .71), int(height * 1.575)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][3], 2, cv2.LINE_AA)
+
+        sign = '(+)' if scored_data[error_index[4], frame] >= 0 else '(-)'
+
+        cv2.putText(full_screen,
+                    f'5. {FEATURE_STRINGS[error_index[4]]} {sign}',
+                    (int(width*2 * .71), int(height * 1.625)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][4], 2, cv2.LINE_AA)
+
+        full_screen = cv2.resize(full_screen, (width, height), interpolation=cv2.INTER_AREA)
+        demo.write(full_screen)
+
+    demo.release()
 
 main()
