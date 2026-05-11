@@ -99,19 +99,19 @@ This validates the ability of the pipeline to identify abnormalities in running 
 
 **Average Right Ground Strike Point:**
 
-0.6188108389691567
+0.6188
 
 <br>
 
 **Average Left Ground Strike Point:**
 
-0.5970236599713672
+0.5970
 
 <br>
 
 **Average Strike Point Imbalance: (negative = left | positive = right)**
 
-0.02178717899778948
+0.0217
 
 <br>
 
