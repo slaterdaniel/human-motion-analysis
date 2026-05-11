@@ -1,5 +1,19 @@
 # Human Motion Analysis: Tracking Athletic Performance, Injury Prevention, and Movement Disabilities
 
+## Contents:
+- [Overview](#overview)
+- [Pipleline](#pipeline)
+- [Example Input --> Output](#example)
+- [Outputted Metrics](#outputted-metrics)
+    - [Dashboard Video](#dashboard)	
+    - [Phase Overlay Videos](#phase-overlay-videos)
+    - [Feature Deviation Tracking](#feature-deviation-tracking)
+    - [Total Form Deviation](#total-form-deviation)	
+    - [Phase Breakdown Isolation](#phase-breakdown-isolation)	
+    - [Phase Deviation Tracking](#phase-deviation-tracking)
+    - [Ground Contact Stats](#ground-contact-stats)	
+
+
 ## Overview:
 This project aims to create an inexpensive and accessible system for analyzing human movement from video. Using pose estimation and machine learning, the system extracts biomechanical features from activities such as walking and running to evaluate performance, detect movement patterns, and identify potential injury risks.
 
@@ -58,37 +72,37 @@ This validates the ability of the pipeline to identify abnormalities in running 
   </thead>
   <tbody>
     <tr>
-      <td>Dashboard Video</td>
+      <td id="dashboard">Dashboard Video</td>
       <td><video src="https://github.com/user-attachments/assets/8310d80e-8310-4bb8-abc9-473e36e34515" width="10" controls></video>
 </td>
     </tr>
     <tr>
-      <td>Phase Overlay Videos</td>
+      <td id="phase-overlay-videos">Phase Overlay Videos</td>
       <td><img width="782.5" height="480" alt="overlay_example" src="https://github.com/user-attachments/assets/16837a4c-4709-4609-9e8e-590b804c681d" />
 </td>
     </tr>
     <tr>
-      <td>Feature Deviation Tracking</td>
+      <td id="feature-deviation-tracking">Feature Deviation Tracking</td>
       <td><img height="480" alt="LEFT ELBOW X" src="https://github.com/user-attachments/assets/1683339d-88a4-4612-8506-41c48f910201" />
 </td>
     </tr>
     <tr>
-      <td>Total Form Deviation</td>
+      <td id="total-form-deviation">Total Form Deviation</td>
       <td><img height="480" alt="Total_Z-Score" src="https://github.com/user-attachments/assets/7e6fa8f9-4644-4843-bf23-64a24a53d04f" />
 </td>
     </tr>
     <tr>
-      <td>Phase Deviation Tracking</td>
+      <td id="phase-deviation-tracking">Phase Deviation Tracking</td>
       <td><img height="480" alt="Phase_Z-Scores" src="https://github.com/user-attachments/assets/983d928c-be88-454c-b962-ad4ca380882e" />
 </td>
     </tr>
     <tr>
-      <td>Phase Breakdown Isolation</td>
+      <td id="phase-breakdown-isolation">Phase Breakdown Isolation</td>
       <td><img height="360" alt="phase_breakdown_comparison" src="https://github.com/user-attachments/assets/802505a5-e65c-4931-a068-4d560f22709c" />
 </td>
     </tr>
     <tr>
-      <td>Ground Contact Stats</td>
+      <td id="ground-contact-stats">Ground Contact Stats</td>
     <td><p>
 
 **----------------STRIDE FREQUENCY----------------**
