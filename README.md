@@ -34,15 +34,104 @@ In dashboard video (pictured right), the large spike in *Total Form Deviation* a
 This validates the ability of the pipeline to identify abnormalities in running form.
 
 ## Outputted Metrics:
-| Metric                     | Example Output |
-|----------------------------|----------------|
-| Dashboard Video            |                |
-| Phase Overlay Videos       |                |
-| Ground Contact Stats       |                |
-| Stride Frequency Stats     |                |
-| Feature Deviation Tracking |                |
-| Phase Stats                |                |
-| Phase Breakdown Isolation  |                |
-| Phase Deviation Tracking   |                |
+<table>
+  <thead>
+    <tr>
+      <th align="left">Metric</th>
+      <th align="left">Example Output</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Dashboard Video</td>
+      <td><video src="https://github.com/user-attachments/assets/8310d80e-8310-4bb8-abc9-473e36e34515" width="50%" controls></video>
+</td>
+    </tr>
+    <tr>
+      <td>Phase Overlay Videos</td>
+      <td><img width="782.5" height="480" alt="overlay_example" src="https://github.com/user-attachments/assets/16837a4c-4709-4609-9e8e-590b804c681d" />
+</td>
+    </tr>
+    <tr>
+      <td>Ground Contact Stats</td>
+      <td><p>
+
+**----------------STRIDE FREQUENCY----------------**
+
+202.068 Steps per Minute
+
+**--------------GROUND STRIKE POINTS--------------**
+
+**Average Right Ground Strike Point:**
+
+0.6188108389691567
+
+<br>
+
+**Average Left Ground Strike Point:**
+
+0.5970236599713672
+
+<br>
+
+**Average Strike Point Imbalance: (negative = left | positive = right)**
+
+0.02178717899778948
+
+<br>
+
+**--------------GROUND CONTACT TIMES--------------**
+
+**Average Ground Contact Time:**
+
+Frames: 6
+
+Seconds: 0.195
+
+<br>
+
+**Average Right Ground Contact Time:**
+
+Frames: 6
+
+Seconds: 0.193
+
+<br>
+
+**Average Left Ground Contact Time:**
+
+Frames: 6
+
+Seconds: 0.197
+
+</p></td>
+    </tr>
+    <tr>
+      <td>Feature Deviation Tracking</td>
+      <td><img height="480" alt="LEFT ELBOW X" src="https://github.com/user-attachments/assets/1683339d-88a4-4612-8506-41c48f910201" />
+</td>
+    </tr>
+    <tr>
+      <td>Total Form Deviation</td>
+      <td><img height="480" alt="Total_Z-Score" src="https://github.com/user-attachments/assets/7e6fa8f9-4644-4843-bf23-64a24a53d04f" />
+</td>
+    </tr>
+    <tr>
+      <td>Phase Deviation Tracking</td>
+      <td><img height="480" alt="Phase_Z-Scores" src="https://github.com/user-attachments/assets/983d928c-be88-454c-b962-ad4ca380882e" />
+</td>
+    </tr>
+    <tr>
+      <td>Phase Breakdown Isolation</td>
+      <td><img height="360" alt="phase_breakdown_comparison" src="https://github.com/user-attachments/assets/802505a5-e65c-4931-a068-4d560f22709c" />
+</td>
+    </tr>
+    <tr>
+      <td>Stride Frequency Stats</td>
+      <td><img height="480" alt="Stride_Frequency" src="https://github.com/user-attachments/assets/51a1ee23-fe1d-40dd-9e74-d83bd6eb18ae" />
+</td>
+    </tr>
+  </tbody>
+</table>
 
 
