@@ -2,7 +2,7 @@
 
 ## Contents:
 - [Overview](#overview)
-- [Pipleline](#pipeline)
+- [Pipeline](#pipeline)
 - [Example Input --> Output](#example)
 - [Outputted Metrics](#outputted-metrics)
     - [Dashboard Video](#dashboard)	
@@ -22,10 +22,10 @@ The long-term goal is to support applications in athletic performance analysis, 
 ## Pipeline:
 | Step | Goal                  | Tool                                  | Use                                                                                                                                                                       |
 |------|-----------------------|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1    | Pose Estimation       | MMPose, Yolo26, Mediapipe             | Extract pose landmarks, joint angles, velocities using Google's MediaPipe library with custom normalization to enable standard comparison across datasets                 |
-| 2    | Phase Identification  | Keras 1D Convolutional Neural Network | Predict gait phases using a 1D Convolutional Neural Network that analyzes temporal patterns in user landmark sequences.                                                   |
+| 1    | Pose Estimation       | MMPose, Yolo26, Mediapipe             | Extract pose landmarks, joint angles, velocities using the user's choice of an engine for pose estimation between: Google's MediaPipe, Ultralytics YOLO26, or OpenMMLab's MMPose libraries, with custom normalization to enable standard comparison across datasets.                 |
+| 2    | Phase Identification  | Keras 1D Convolutional Neural Network | Predict gait phases using a 1D Convolutional Neural Network that analyzes temporal patterns in user landmark sequences. <br> <br> ****Phases are separated into:**** <br> <br> - Left/Right Ground Contact (LGC/RGC) <br> <br> - Left/Right Propulsion (LP/RP) <br> <br> - Left/Right Flight (LF/RF)                                                  |
 | 3    | Form Scoring          | Median Absolute Deviation (MAD)       | Compute deviation from reference motion patterns using Median Absolute Deviation (MAD) and calculate each feature's similarity scores over time using MAD-based Z-scores. |
-| 4    | Output                | OpenCV, Matplotlib, Plotly            | Generate visualizations using OpenCV and Matplotlib including pose skeleton overlays comparing user movement to reference motion and plots of feature Z-scores over time. |
+| 4    | Output                | OpenCV, Matplotlib, Plotly            | Generate visualizations: <br> <br> ****OpenCV:**** <br> - Dashboard Video containing Form Deviation over time, color coded skeleton, and form correction suggestions <br> - Phase Overlays of Correct Form <br> <br> ****Matplotlib:**** <br> - Individual Z-scores over time <br> - Total Form Deviation Scoring over time <br> - Phase Z-scores over time <br> <br> ****Plotly:**** <br> - Individual Phase Breakdown Isolation |
 
 ## Example:
 
@@ -49,17 +49,24 @@ This validates the ability of the pipeline to identify abnormalities in running 
 
 ## Outputted Metrics:
 
+****Full Video Analysis:****
 - Dashboard Video
-- Phase Overlay Videos
 - Feature Deviation Tracking
 - Total Form Deviation Tracking
+
+
+****Individual Phase Analysis:****
+- Phase Overlay Videos
 - Phase Deviation Tracking
 - Phase Breakdown Tracking
 - Phase Breakdown Isolation
-- Ground Contact Statistics
-    - Ground Contact Times
-    - Left / Right Imbalance
-    - Strike Point Statistics
+
+
+****Ground Contact Statistics:****
+- Ground Contact Times
+- Left / Right Imbalance
+- Strike Point Statistics
+<br>
       
 ### Example Outputs:  
 
