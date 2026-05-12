@@ -678,6 +678,7 @@ Seconds: {left_contact_lengths / 30}
         plt.title(FEATURE_STRINGS[i])
         plt.xlabel("Frames")
         plt.ylabel("Z Scores")
+        plt.axhline(0, color='black', linewidth=2)
 
         plt.plot(scored_data[i], alpha =.25, color='b', label="Score")
 
@@ -782,8 +783,8 @@ Seconds: {left_contact_lengths / 30}
     overlay_cap.set(cv2.CAP_PROP_POS_FRAMES, Engine.get_formatting()[1])
     skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, Engine.get_formatting()[1])
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    demo = cv2.VideoWriter('../outputs/videos/dashboard/dashboard.mp4', fourcc, 3, (width, height))
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
+    demo = cv2.VideoWriter('../outputs/videos/dashboard/dashboard.mp4', fourcc, 10, (int(width*.65), int(height*.65)))
     canvas = np.zeros((height, width*2, 3), dtype=np.uint8)
 
     plt.style.use('dark_background')  # Looks better in tech demos
@@ -915,7 +916,7 @@ Seconds: {left_contact_lengths / 30}
                     f'5. {FEATURE_STRINGS[error_index[4]]} {sign}',
                     (int(width*2 * .71), int(height * 1.625)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][4], 2, cv2.LINE_AA)
 
-        full_screen = cv2.resize(full_screen, (width, height), interpolation=cv2.INTER_AREA)
+        full_screen = cv2.resize(full_screen, (int(width*.65), int(height*.65)), interpolation=cv2.INTER_AREA)
         demo.write(full_screen)
 
     demo.release()
