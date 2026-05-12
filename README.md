@@ -29,6 +29,8 @@ The long-term goal is to support applications in athletic performance analysis, 
 
 ## Example:
 
+*Model Credit: Zoe Johnson, MKA Sprinter Class of 2028*
+
 <table border="0">
   <tr>
     <td width="50%">
