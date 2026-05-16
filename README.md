@@ -5,7 +5,7 @@
     <img width="400" alt="bottom-dash-preview" src="https://github.com/user-attachments/assets/2769c20b-6331-4075-893a-4bb130f594e6" />
 </div>
 
-## Contents:
+# Contents:
 - [Overview](#overview)
 - [Pipeline](#pipeline)
 - [Example Input --> Output](#example)
@@ -19,12 +19,31 @@
     - [Ground Contact Stats](#ground-contact-stats)	
 
 
-## Overview:
-This project aims to create an inexpensive and accessible system for analyzing human movement from video. Using pose estimation and machine learning, the system extracts biomechanical features from activities such as walking and running to evaluate performance, detect movement patterns, and identify potential injury risks.
+# Overview:
 
-The long-term goal is to support applications in athletic performance analysis, injury prevention, and movement disorder assessment.
+#### Current Capabilities:
+<ins>**This project aims to create an inexpensive and accessible system for analyzing human movement from video.**</ins>
 
-## Pipeline:
+Using pose estimation and machine learning, the system extracts biomechanical features from videos of users sprinting to evaluate performance, detect movement patterns, and provide feedback suggestions.
+
+---
+
+#### Future Implementations:
+The long-term goal is to support applications in: 
+- Other athletic actions *(baseball swing, barbell squat, basketball jumpshot, etc.)*
+- Injury prevention feedback
+- Movement disorder assessment
+
+---
+
+#### Project Motivations:
+As a track athlete, I wanted to create a tool that people can use to evalutate sprint performance without access to expensive lab equipment.
+
+I got the idea to expand the capabilites of the tool to be able to be used by people with disablilities because of my younger brother, Aaron, with special needs.
+
+---
+
+# Pipeline:
 | Step | Goal                  | Tool                                  | Use                                                                                                                                                                       |
 |------|-----------------------|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1    | Pose Estimation       | MMPose, Yolo26, Mediapipe             | Extract pose landmarks, joint angles, velocities using the user's choice of an engine for pose estimation between: Google's MediaPipe, Ultralytics YOLO26, or OpenMMLab's MMPose libraries, with custom normalization to enable standard comparison across datasets.                 |
@@ -32,7 +51,7 @@ The long-term goal is to support applications in athletic performance analysis, 
 | 3    | Form Scoring          | Median Absolute Deviation (MAD)       | Compute deviation from reference motion patterns using Median Absolute Deviation (MAD) and calculate each feature's similarity scores over time using MAD-based Z-scores. |
 | 4    | Output                | OpenCV, Matplotlib, Plotly            | Generate visualizations: <br> <br> ****OpenCV:**** <br> - Dashboard Video containing Form Deviation over time, color coded skeleton, and form correction suggestions <br> - Phase Overlays of Correct Form <br> <br> ****Matplotlib:**** <br> - Individual Z-scores over time <br> - Total Form Deviation Scoring over time <br> - Phase Z-scores over time <br> <br> ****Plotly:**** <br> - Individual Phase Breakdown Isolation |
 
-## Example:
+# Example:
 
 *Model Credit: Zoe Johnson, MKA Sprinter Class of 2028*
 
@@ -54,7 +73,7 @@ The long-term goal is to support applications in athletic performance analysis, 
 In dashboard video (pictured right), the large spike in *Total Form Deviation* at ~11sec aligns with form error of athletes left arm being raised 
 This validates the ability of the pipeline to identify abnormalities in running form.
 
-## Outputted Metrics:
+# Outputted Metrics:
 
 ****Full Video Analysis:****
 - Dashboard Video
