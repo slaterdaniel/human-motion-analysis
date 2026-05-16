@@ -78,12 +78,12 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
     vertical = True if height > width else False
 
-    PHASE_STRINGS = {0: 'Right Ground Contact',
-                     1: 'Right Propulsion',
-                     2: 'Right Flight',
-                     3: 'Left Ground Contact',
-                     4: 'Left Propulsion',
-                     5: 'Left Flight'}
+    PHASE_STRINGS = ['Right Ground Contact',
+                     'Right Propulsion',
+                     'Right Flight',
+                     'Left Ground Contact',
+                     'Left Propulsion',
+                     'Left Flight']
 
     border = window_size // 2
     length = np.maximum(worst_length, best_length)
@@ -92,7 +92,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     worst_start_frame = worst_frame - offset
     best_start_frame = best_frame - offset
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
     if vertical:
         feedback_column_dims = height, 250
         out_dims = width * 2 + 250, height
@@ -203,7 +203,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     print(f"{os.path.basename(file):<25} Successfully Saved")
 
 def main():
-    USER_VIDEO = "../data/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+    USER_VIDEO = "../data/user_input/jose-test.mov" # ***REPLACE WITH FILE OF USER VIDEO***
 
     while True:
         engine = input("Engine to Use: ").lower()
@@ -222,7 +222,14 @@ def main():
         else:
             print("Invalid Engine Inputted. Try Again.\n")
 
+    graph_saving = True if input('Save Graphs?\n[y/n]\n')[0] == 'y' else False
+
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
+
+    # user data = array formatted for 1D CNN 9 frame windows
+    # raw user data = array where shape=[feature, frame]
+    user_data, raw_data = video_processor.get_data(show=False, user_video=USER_VIDEO)
+    raw_data = raw_data.T
 
     FEATURE_STRINGS = [
 
@@ -282,11 +289,6 @@ def main():
         'RIGHT FOOT X',
         'RIGHT FOOT Y',
     ]
-
-    # user data = array formatted for 1D CNN 9 frame windows
-    # raw user data = array where shape=[feature, frame]
-    user_data, raw_data = video_processor.get_data(show=False, user_video=USER_VIDEO)
-    raw_data = raw_data.T
 
     # Median Absolute Deviation (MAD) and medians of features in reference data
     with open('../assets/phase_statistics/phase_statistics.pkl', 'rb') as f:
@@ -462,14 +464,20 @@ def main():
         start = np.maximum(0, i - window // 2)
         end = np.minimum(len(user_predictions), i + window // 2)
         last_phase = user_predictions[start]
-        count = 0
+        phase_count = 0
 
-        # count number of frames within window
+        # # count number of frames within window
+        # for phase in user_predictions[start+1:end]:
+        #     if (phase == 0 or phase == 3) and phase != last_phase: # Count rep when left or right foot hits the ground
+        #         count += 1
+        #     last_phase = phase
+        # strides_per_sec.append(count * window / (end-start)) # Adjust count to window size
+
         for phase in user_predictions[start+1:end]:
-            if (phase == 0 or phase == 3) and phase != last_phase: # Count rep when left or right foot hits the ground
-                count += 1
+            if phase != last_phase:
+                phase_count += 1
             last_phase = phase
-        strides_per_sec.append(count * window / (end-start)) # Adjust count to window size
+        strides_per_sec.append((phase_count / 3) * window / (end-start))
 
     # phases are deemed "faulty" when the mean of the sum of the features squared z scores
     # in a given phase are in higher than the 95th percentile of phase z scores
@@ -620,13 +628,13 @@ def main():
     ---------------------
 
 Average Right Ground Strike Point:
-{np.mean(right_contacts)}
+{np.mean(right_contacts):.3f}
 
 Average Left Ground Strike Point:
-{np.mean(left_contacts)}
+{np.mean(left_contacts):.3f}
 
 Average Strike Point Imbalance: (negative = left | positive = right)
-{np.mean(right_contacts) - np.mean(left_contacts)}
+{np.mean(right_contacts) - np.mean(left_contacts):.3f}
 
 
 Right Ground Striking Points:
@@ -673,24 +681,25 @@ Seconds: {left_contact_lengths / 30}
     plt.savefig("../outputs/graphs/phase_breakdown/Total_Z-Score.png", dpi=300)
     plt.close()
 
-    for i in range(len(scored_data)):
-        plt.figure(figsize=(18, 5))
-        plt.title(FEATURE_STRINGS[i])
-        plt.xlabel("Frames")
-        plt.ylabel("Z Scores")
-        plt.axhline(0, color='black', linewidth=2)
+    if graph_saving:
+        for i in range(len(scored_data)):
+            plt.figure(figsize=(18, 5))
+            plt.title(FEATURE_STRINGS[i])
+            plt.xlabel("Frames")
+            plt.ylabel("Z Scores")
+            plt.axhline(0, color='black', linewidth=2)
 
-        plt.plot(scored_data[i], alpha =.25, color='b', label="Score")
+            plt.plot(scored_data[i], alpha =.25, color='b', label="Score")
 
-        ema = [scored_data[i, 0]]
-        for x in range(1, len(scored_data[i])):
-            ema.append(scored_data[i, x] * .05 + ema[-1] * .95 )
+            ema = [scored_data[i, 0]]
+            for x in range(1, len(scored_data[i])):
+                ema.append(scored_data[i, x] * .05 + ema[-1] * .95 )
 
-        plt.plot(ema, color='r', label="EMA Trend")
+            plt.plot(ema, color='r', label="EMA Trend")
 
-        plt.legend()
-        plt.savefig(f"../outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
-        plt.close()
+            plt.legend()
+            plt.savefig(f"../outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
+            plt.close()
 
     print("Saving Stride Frequency Data:")
     plt.figure(figsize=(18, 5))
@@ -877,6 +886,10 @@ Seconds: {left_contact_lengths / 30}
         rgba_buffer = graph.buffer_rgba()
         graph_img = np.asarray(rgba_buffer)
         graph_img = cv2.cvtColor(graph_img, cv2.COLOR_RGBA2BGR)
+
+        graph_ratio = width / graph_img.shape[1]
+        graph_img = cv2.resize(graph_img, (int(width*1.5), int(graph_img.shape[0] * graph_ratio * 1.5)), interpolation=cv2.INTER_AREA)
+
         h, w = graph_img.shape[:2]
         full_screen[int(height*1.25):int(height*1.25) + h, :w] = graph_img
 
