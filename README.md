@@ -56,8 +56,6 @@ I got the idea to expand the capabilites of the tool to help enhance motor plann
 
 # Example:
 
-*Model Credit: [Zoe Johnson - Sprinter, Class of 2028](https://www.athletic.net/athlete/23306526/track-and-field/all)*
-
 <table border="0">
   <tr>
     <td width="50%">
