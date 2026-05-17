@@ -33,14 +33,16 @@ Using pose estimation and machine learning, the system extracts biomechanical fe
 The long-term goal is to support applications in: 
 - Other athletic actions *(baseball swing, barbell squat, basketball jumpshot, etc.)*
 - Injury prevention feedback
-- Movement disorder assessment
+- Rehabilitation
+- Motor Planning
+- Movement Disorder Assessment
 
 ---
 
 #### Project Motivations:
 As a track athlete, I wanted to create a tool that people can use to evalutate sprint performance without access to expensive lab equipment.
 
-I got the idea to expand the capabilites of the tool to be able to be used by people with disablilities because of my younger brother, Aaron, with special needs.
+I got the idea to expand the capabilites of the tool to help enhance motor planning because of my younger brother with special needs.
 
 ---
 
