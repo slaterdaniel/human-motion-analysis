@@ -7,7 +7,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.ticker import FuncFormatter
 import plotly.graph_objects as go
 import os
-from pose import Engine
+from src.pose import Engine
 
 # KEY:
 # rgc = right ground contact
@@ -202,34 +202,26 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     out.release()
     print(f"{os.path.basename(file):<25} Successfully Saved")
 
-def main():
-    USER_VIDEO = "../data/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+def analyze(user_video, engine, show):
+    graph_saving = False
 
-    show = True if input('Show Frame-by-Frame Processing?\nWARNING: Slightly Slower Processing Speeds\n[y/n]\n')[0] == 'y' else False
-    graph_saving = True if input('Save Z-score Graphs?\n[y/n]\n')[0] == 'y' else False
+    if engine == 'mediapipe':
+        from src.pose import mediapipe_video_processor as video_processor
+        phase_classifier = '../assets/phase_classifier_models/mediapipe_phase_classifier.keras'
 
-    while True:
-        engine = input("Engine to Use: ").lower()
-        if engine == 'mediapipe':
-            from pose import mediapipe_video_processor as video_processor
-            phase_classifier = '../assets/phase_classifier_models/mediapipe_phase_classifier.keras'
-            break
-        elif engine == 'yolo26':
-            from pose import yolo26_video_processor as video_processor
-            phase_classifier = '../assets/phase_classifier_models/yolo26_phase_classifier.keras'
-            break
-        elif engine == 'mmpose':
-            from pose import mmpose_video_processor as video_processor
-            phase_classifier = '../assets/phase_classifier_models/mmpose_phase_classifier.keras'
-            break
-        else:
-            print("Invalid Engine Inputted. Try Again.\n")
+    elif engine == 'yolo26':
+        from src.pose import yolo26_video_processor as video_processor
+        phase_classifier = '../assets/phase_classifier_models/yolo26_phase_classifier.keras'
+
+    else:
+        from src.pose import mmpose_video_processor as video_processor
+        phase_classifier = '../assets/phase_classifier_models/mmpose_phase_classifier.keras'
 
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
-    user_data, raw_data = video_processor.get_data(show=show, user_video=USER_VIDEO)
+    user_data, raw_data = video_processor.get_data(show=show, user_video=user_video)
     raw_data = raw_data.T
 
     FEATURE_STRINGS = [
@@ -938,4 +930,6 @@ Seconds: {left_contact_lengths / 30}
 
     print('Dashboard Video Saved\n\nPROCESS COMPLETE')
 
-main()
+    return {'contacts': right_contact_lengths,
+            'spm': steps_per_minute,
+            'video': user_video}

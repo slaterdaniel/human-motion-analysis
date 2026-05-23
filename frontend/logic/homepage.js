@@ -87,6 +87,33 @@ startButton.addEventListener('click', () => {
         alert('Please upload a video and select a model before starting the analysis.');
         return;
     }
-    alert(`Starting analysis.\nInput Video: ${videoFile}\nUsing model: ${selectedModel}\nShow process: ${showProcess}`);
+    sendDataToBackend(videoFile, selectedModel, showProcess);
 });
 
+async function sendDataToBackend(videoFile, selectedModel, showProcess) {
+    const userInput = {
+        user_video: videoFile,
+        model: selectedModel,
+        show: showProcess
+    };
+
+    alert(`Starting analysis.\nInput Video: ${videoFile}\nUsing model: ${selectedModel}\nShow process: ${showProcess}`);
+
+    try {
+        const response = await fetch('/inputs', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(userInput)
+        });
+
+        const results = await response.json();
+
+        if (results.status === 'Success') {
+            alert('Analysis completed successfully!');
+        }
+    } catch (error) {
+        console.error('Error sending data to backend:', error);
+        alert(`${error}. Please try again.`);
+    }
+
+}
