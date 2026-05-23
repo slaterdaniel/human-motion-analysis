@@ -1,0 +1,78 @@
+* {
+    padding-inline: 1vw;
+}
+
+body {
+    background-color: rgb(230, 217, 150);
+    position: relative;
+}
+
+.upload-box {
+    padding-top: 10vh;
+    padding-bottom: 10vh;
+    width: 50vw;
+    background-color: aliceblue;
+    border-radius: 5px;
+    transition: 0.3s ease;
+}
+
+.upload-box:hover {
+    cursor: pointer;
+    transform: scale(1.03);
+}
+
+#input-video {
+    display: none;
+}
+
+#video-preview {
+    width: 20vw;
+    border-radius: 5px;
+}
+
+.center {
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+
+}
+
+.center-box {
+  display: grid;
+  place-items: center;
+}
+
+.choice-bar {
+    display: flex;
+    padding-top: 2vh;
+    padding-bottom: 2vh;
+    column-gap: 3vw;
+}
+
+.choice {
+    user-select: none;
+    background-color: aliceblue;
+    padding-inline: 3vw;
+    padding-top: 3vh;
+    padding-bottom: 3vh;
+    border-radius: 5px;
+    transition: 0.3s ease;
+    cursor: pointer;
+}
+
+.choice:hover {
+    transform: scale(1.05);
+}
+
+.mediapipe:hover {
+    background-color: rgb(117, 198, 198);
+}
+
+.mmpose:hover {
+    background-color: rgba(70, 70, 226, 1);
+}
+
+.yolo26:hover {
+    background-color: rgba(143, 157, 217, 1);
+}
+

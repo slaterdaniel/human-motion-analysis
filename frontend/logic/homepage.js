@@ -1,0 +1,92 @@
+const inputVideo = document.getElementById('input-video');
+const videoPreview = document.getElementById('video-preview');
+const uploadText = document.getElementById('upload-text');
+
+const mediapipeButton = document.getElementById('mediapipe');
+const mmposeButton = document.getElementById('mmpose');
+const yolo26Button = document.getElementById('yolo26');
+const showProcessButton = document.getElementById('show-process');
+
+const startButton = document.getElementById('start-button');
+
+let videoFile = null;
+let selectedModel = null;
+let showProcess = false;
+
+inputVideo.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        videoFile = URL.createObjectURL(file);
+        videoPreview.src = videoFile;
+        videoPreview.style.display = 'block';
+        uploadText.textContent = 'Video Preview:';
+    }
+});
+
+mediapipeButton.addEventListener('click', () => {
+   if (selectedModel === 'mediapipe') {
+      mediapipeButton.style.backgroundColor = '';
+      mediapipeButton.style.transform = 'scale(1)';
+      selectedModel = null;
+      return;
+   }
+   mediapipeButton.style.backgroundColor = 'rgb(117, 198, 198)';
+   mediapipeButton.style.transform = 'scale(1.05)';
+   yolo26Button.style.backgroundColor = '';
+   yolo26Button.style.transform = 'scale(1)';
+   mmposeButton.style.backgroundColor = '';
+   mmposeButton.style.transform = 'scale(1)';
+   selectedModel = 'mediapipe';
+});
+
+mmposeButton.addEventListener('click', () => {
+    if (selectedModel === 'mmpose') {
+       mmposeButton.style.backgroundColor = '';
+       mmposeButton.style.transform = 'scale(1)';
+       selectedModel = null;
+       return;
+    }
+   mmposeButton.style.backgroundColor = 'rgba(70, 70, 226, 1)';
+   mmposeButton.style.transform = 'scale(1.05)';
+   mediapipeButton.style.backgroundColor = '';
+   mediapipeButton.style.transform = 'scale(1)';
+   yolo26Button.style.backgroundColor = '';
+   yolo26Button.style.transform = 'scale(1)';
+   selectedModel = 'mmpose';
+});
+
+yolo26Button.addEventListener('click', () => {
+    if (selectedModel === 'yolo26') {
+       yolo26Button.style.backgroundColor = '';
+       yolo26Button.style.transform = 'scale(1)';
+       selectedModel = null;
+       return;
+    }
+   yolo26Button.style.backgroundColor = 'rgba(143, 157, 217, 1)';
+   yolo26Button.style.transform = 'scale(1.05)';
+   mediapipeButton.style.backgroundColor = '';
+   mediapipeButton.style.transform = 'scale(1)';
+   mmposeButton.style.backgroundColor = '';
+   mmposeButton.style.transform = 'scale(1)';
+   selectedModel = 'yolo26';
+});
+
+showProcessButton.addEventListener('click', () => {
+   showProcess = !showProcess;
+    if (showProcess) {
+        showProcessButton.style.backgroundColor = 'rgba(59, 230, 219, 1)';
+        showProcessButton.style.transform = 'scale(1.05)';
+    } else {
+        showProcessButton.style.backgroundColor = '';
+        showProcessButton.style.transform = 'scale(1)';
+    }
+});
+
+startButton.addEventListener('click', () => {
+    if (!(videoFile && selectedModel)) {
+        alert('Please upload a video and select a model before starting the analysis.');
+        return;
+    }
+    alert(`Starting analysis.\nInput Video: ${videoFile}\nUsing model: ${selectedModel}\nShow process: ${showProcess}`);
+});
+

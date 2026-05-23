@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Motion Analysis</title>
+    <link rel="stylesheet" href="../style/style.css">
+</head>
+<body>
+    <!-- <h1>MoveIQ</h1>
+    <h1>MoveClear</h1>
+    <h1>MoveKey</h1>
+    <h1>StepClear</h1>
+    <h1>StepUP</h1>
+    <h1>Pocket MAC</h1> Motion Analysis Coach -->
+
+    <h1>Mac Now</h1>
+    <div class="center-box">
+        <label for="input-video" class="center-box upload-box">
+            <input type="file" id="input-video" accept="video/*">
+            <h2 id="upload-text">Click or Drag Video Here to Analyze</h2>
+            <video id="video-preview" controls style="display: none; max-width: 100%; height: auto;"></video>
+        </label>
+    </div>
+
+    <div class="choice-bar center">
+        <div id="mediapipe" class="choice mediapipe">Mediapipe</div>
+        <div id="mmpose" class="choice mmpose">MMPose</div>
+        <div id="yolo26" class="choice yolo26">YOLO26</div>
+    </div>
+
+    <div class="choice-bar center">
+        <div id="show-process" class="choice show-process">Show Process</div>
+    </div>
+
+    <div class="choice-bar center">
+        <div id="start-button" class="choice">READY TO GO</div>
+    </div>
+
+
+    
+
+    <script src="../logic/homepage.js"></script>
+</body>

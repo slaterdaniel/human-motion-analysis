@@ -203,7 +203,10 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     print(f"{os.path.basename(file):<25} Successfully Saved")
 
 def main():
-    USER_VIDEO = "../data/user_input/jose-test.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+    USER_VIDEO = "../data/user_input/boetest.mov" # ***REPLACE WITH FILE OF USER VIDEO***
+
+    show = True if input('Show Frame-by-Frame Processing?\nWARNING: Slightly Slower Processing Speeds\n[y/n]\n')[0] == 'y' else False
+    graph_saving = True if input('Save Z-score Graphs?\n[y/n]\n')[0] == 'y' else False
 
     while True:
         engine = input("Engine to Use: ").lower()
@@ -222,13 +225,11 @@ def main():
         else:
             print("Invalid Engine Inputted. Try Again.\n")
 
-    graph_saving = True if input('Save Graphs?\n[y/n]\n')[0] == 'y' else False
-
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
-    user_data, raw_data = video_processor.get_data(show=False, user_video=USER_VIDEO)
+    user_data, raw_data = video_processor.get_data(show=show, user_video=USER_VIDEO)
     raw_data = raw_data.T
 
     FEATURE_STRINGS = [
@@ -771,7 +772,8 @@ Seconds: {left_contact_lengths / 30}
                phase_lengths[lf_phase_index][np.argmin(phase_scores[lf_phase_index][:, 0])],
                raw_data, user_predictions, scored_data, FEATURE_STRINGS)
 
-#     DEMO OUTPUT
+    print('Saving Dashboard Video:')
+
     PHASE_STRINGS = ['Right Ground Contact',
                      'Right Propulsion',
                      'Right Flight',
@@ -933,5 +935,7 @@ Seconds: {left_contact_lengths / 30}
         demo.write(full_screen)
 
     demo.release()
+
+    print('Dashboard Video Saved\n\nPROCESS COMPLETE')
 
 main()
