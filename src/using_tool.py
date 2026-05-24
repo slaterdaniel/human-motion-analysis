@@ -68,8 +68,8 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     Returns:
         None
     """
-    skeleton_cap = cv2.VideoCapture('../outputs/videos/user_skeleton/user_skeleton.mp4')
-    overlay_cap = cv2.VideoCapture('../outputs/videos/overlays/full_overlay.mp4')
+    skeleton_cap = cv2.VideoCapture('outputs/videos/user_skeleton/user_skeleton.mp4')
+    overlay_cap = cv2.VideoCapture('outputs/videos/overlays/full_overlay.mp4')
     fps = 1.5
     width = int(skeleton_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(skeleton_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -203,19 +203,23 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     print(f"{os.path.basename(file):<25} Successfully Saved")
 
 def analyze(user_video, engine, show):
+    # return {'contacts': 1,
+    #         'spm': 2,
+    #         'video': 3}
+
     graph_saving = False
 
     if engine == 'mediapipe':
         from src.pose import mediapipe_video_processor as video_processor
-        phase_classifier = '../assets/phase_classifier_models/mediapipe_phase_classifier.keras'
+        phase_classifier = 'assets/phase_classifier_models/mediapipe_phase_classifier.keras'
 
     elif engine == 'yolo26':
         from src.pose import yolo26_video_processor as video_processor
-        phase_classifier = '../assets/phase_classifier_models/yolo26_phase_classifier.keras'
+        phase_classifier = 'assets/phase_classifier_models/yolo26_phase_classifier.keras'
 
     else:
         from src.pose import mmpose_video_processor as video_processor
-        phase_classifier = '../assets/phase_classifier_models/mmpose_phase_classifier.keras'
+        phase_classifier = 'assets/phase_classifier_models/mmpose_phase_classifier.keras'
 
     np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=95)
 
@@ -284,7 +288,7 @@ def analyze(user_video, engine, show):
     ]
 
     # Median Absolute Deviation (MAD) and medians of features in reference data
-    with open('../assets/phase_statistics/phase_statistics.pkl', 'rb') as f:
+    with open('assets/phase_statistics/phase_statistics.pkl', 'rb') as f:
         phase_stats = pickle.load(f)
 
     model = load_model(phase_classifier, compile=False) # 1D CNN to predict phases
@@ -376,7 +380,7 @@ def analyze(user_video, engine, show):
 
     # Score each feature across each frame using MAD Z score
     phase_scores, phase_lengths = find_phase_scores(scored_data, user_predictions)
-    np.save('../assets/test_data.npy', phase_scores)
+    np.save('assets/test_data.npy', phase_scores)
 
     # Create array of the order each phase appears throughout the user's video
     phase_order = [user_predictions[0]]
@@ -436,7 +440,7 @@ def analyze(user_video, engine, show):
     plt.xlabel('Rep #')
     plt.ylabel('Phase Z-Score')
     plt.legend()
-    plt.savefig('../outputs/graphs/phase_breakdown/Phase_Z-Scores.png', dpi=300)
+    plt.savefig('outputs/graphs/phase_breakdown/Phase_Z-Scores.png', dpi=300)
 
     # Create array of the indexes of each rep as they appear in the user's video
     rep_index = []
@@ -491,7 +495,7 @@ def analyze(user_video, engine, show):
     # Save Phase Analysis Metrics
 
     print("Saving Phase Scoring Metrics:")
-    with open('../outputs/metrics/Right_Ground_Contact.txt', 'w') as f:
+    with open('outputs/metrics/Right_Ground_Contact.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
 
@@ -510,7 +514,7 @@ def analyze(user_video, engine, show):
         )
     print(f"{'Right_Ground_Contact.txt':<25} Successfully Saved")
 
-    with open('../outputs/metrics/Right_Propulsion.txt', 'w') as f:
+    with open('outputs/metrics/Right_Propulsion.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
 
@@ -529,7 +533,7 @@ def analyze(user_video, engine, show):
         )
     print(f"{'Right_Propulsion.txt':<25} Successfully Saved")
 
-    with open('../outputs/metrics/Right_Flight.txt', 'w') as f:
+    with open('outputs/metrics/Right_Flight.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
 
@@ -548,7 +552,7 @@ def analyze(user_video, engine, show):
         )
     print(f"{'Right_Flight.txt':<25} Successfully Saved")
 
-    with open('../outputs/metrics/Left_Ground_Contact.txt', 'w') as f:
+    with open('outputs/metrics/Left_Ground_Contact.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
 
@@ -567,7 +571,7 @@ def analyze(user_video, engine, show):
         )
     print(f"{'Left_Ground_Contact.txt':<25} Successfully Saved")
 
-    with open('../outputs/metrics/Left_Propulsion.txt', 'w') as f:
+    with open('outputs/metrics/Left_Propulsion.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
 
@@ -586,7 +590,7 @@ def analyze(user_video, engine, show):
         )
     print(f"{'Left_Propulsion.txt':<25} Successfully Saved")
 
-    with open('../outputs/metrics/Left_Flight.txt', 'w') as f:
+    with open('outputs/metrics/Left_Flight.txt', 'w') as f:
         f.write(
             f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
 
@@ -607,7 +611,7 @@ def analyze(user_video, engine, show):
 
     # Save Ground Contact Timing
     print("Saving Ground Contact Timing Data\n")
-    with open('../outputs/metrics/Ground_Contact_Timing.txt', 'w') as f:
+    with open('outputs/metrics/Ground_Contact_Timing.txt', 'w') as f:
         f.write(
             f"""
     ----------------
@@ -671,7 +675,7 @@ Seconds: {left_contact_lengths / 30}
     plt.xlabel("Phase #")
     plt.ylabel("Z-Score")
     plt.plot(phase_scores[:, 0], color='b', label='Score')
-    plt.savefig("../outputs/graphs/phase_breakdown/Total_Z-Score.png", dpi=300)
+    plt.savefig("outputs/graphs/phase_breakdown/Total_Z-Score.png", dpi=300)
     plt.close()
 
     if graph_saving:
@@ -691,7 +695,7 @@ Seconds: {left_contact_lengths / 30}
             plt.plot(ema, color='r', label="EMA Trend")
 
             plt.legend()
-            plt.savefig(f"../outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
+            plt.savefig(f"outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
             plt.close()
 
     print("Saving Stride Frequency Data:")
@@ -701,7 +705,7 @@ Seconds: {left_contact_lengths / 30}
     plt.ylim(0, None)
     plt.xlabel("Frames")
     plt.ylabel("Strides/Second")
-    plt.savefig("../outputs/graphs/Stride_Frequency/Stride_Frequency.png", dpi=300)
+    plt.savefig("outputs/graphs/Stride_Frequency/Stride_Frequency.png", dpi=300)
     print(f"{'Stride Frequency Data':<25} Successfully Saved\n")
 
     print('Saving Phase Breakdown Data:')
@@ -714,12 +718,12 @@ Seconds: {left_contact_lengths / 30}
         name='Phase Breakdown',
         line_color='red'
     ))
-    # phase_score_fig.write_html('../outputs/graphs/phase_averages.html', auto_open=False) # <-- USE HTML FOR FINAL PRODUCT
-    phase_score_fig.write_image('../outputs/graphs/phase_breakdown/phase_breakdown_comparison.png', width=800, height=600, scale=2)
+    # phase_score_fig.write_html('outputs/graphs/phase_averages.html', auto_open=False) # <-- USE HTML FOR FINAL PRODUCT
+    phase_score_fig.write_image('outputs/graphs/phase_breakdown/phase_breakdown_comparison.png', width=800, height=600, scale=2)
     print(f"{'Phase Breakdown Data':<25} Successfully Saved\n")
 
     print("Saving Phase Overlay Videos:")
-    save_path = '../outputs/videos/overlays/'
+    save_path = 'outputs/videos/overlays/'
 
     # Save user_input of each phase's best instance overlaid on the worst instance
     save_video(save_path + 'Right_Ground_Contact.mp4',
@@ -779,15 +783,15 @@ Seconds: {left_contact_lengths / 30}
         'green': [(64, 255, 64), (96, 255, 96), (128, 255, 128), (160, 255, 160), (192, 255, 192)]
     }
 
-    overlay_cap = cv2.VideoCapture(f'../outputs/videos/overlays/full_overlay.mp4')
-    skeleton_cap = cv2.VideoCapture(f'../outputs/videos/user_skeleton/user_skeleton.mp4')
+    overlay_cap = cv2.VideoCapture(f'outputs/videos/overlays/full_overlay.mp4')
+    skeleton_cap = cv2.VideoCapture(f'outputs/videos/user_skeleton/user_skeleton.mp4')
     width = int(overlay_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(overlay_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     overlay_cap.set(cv2.CAP_PROP_POS_FRAMES, Engine.get_formatting()[1])
     skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, Engine.get_formatting()[1])
 
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
-    demo = cv2.VideoWriter('../outputs/videos/dashboard/dashboard.mp4', fourcc, 10, (int(width*.65), int(height*.65)))
+    demo = cv2.VideoWriter('outputs/videos/dashboard/dashboard.mp4', fourcc, 10, (int(width*.65), int(height*.65)))
     canvas = np.zeros((height, width*2, 3), dtype=np.uint8)
 
     plt.style.use('dark_background')  # Looks better in tech demos
@@ -930,6 +934,6 @@ Seconds: {left_contact_lengths / 30}
 
     print('Dashboard Video Saved\n\nPROCESS COMPLETE')
 
-    return {'contacts': right_contact_lengths,
-            'spm': steps_per_minute,
-            'video': user_video}
+    return {'contacts': 1,
+            'spm': 2,
+            'video': 3}

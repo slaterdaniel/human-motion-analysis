@@ -1,7 +1,7 @@
-from model.creation import create_models
-from model.training import train_models
-from model.answer_key import create_key
-from statistics.data_processor import get_phase_statistics
+from src.model.creation import create_models
+from src.model.training import train_models
+from src.model.answer_key import create_key
+from src.statistics.data_processor import get_phase_statistics
 import pickle
 
 def main():
@@ -57,7 +57,7 @@ def main():
     # new_phase_stats[engine][phase][subphase][mad/median]
 
     print(new_phase_stats)
-    with open('../assets/phase_statistics/phase_statistics.pkl', 'r+b') as f:
+    with open('assets/phase_statistics/phase_statistics.pkl', 'r+b') as f:
         phase_statistics = pickle.load(f)
         phase_statistics.update(new_phase_stats)
 

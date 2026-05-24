@@ -5,7 +5,7 @@ from src.pose import Engine
 
 
 def main():
-    video = '../data/user_input/boetest.mov'
+    video = 'data/user_input/boetest.mov'
     cap = cv2.VideoCapture(video)
     frame_num = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     border = Engine.get_formatting()[1]
@@ -84,7 +84,7 @@ def main():
             cap.set(cv2.CAP_PROP_POS_FRAMES, curr_frame)
 
     cv2.destroyAllWindows()
-    np.save(f'../assets/video_training_labels/{os.path.splitext(os.path.basename(video))[0]}.npy', phase_labels)
+    np.save(f'assets/video_training_labels/{os.path.splitext(os.path.basename(video))[0]}.npy', phase_labels)
     print(f'\nFinal Labels:\n{np.array(phase_labels)}')
     print(f'Length = {len(phase_labels)}/{frame_num - 1 - border * 2}')
 

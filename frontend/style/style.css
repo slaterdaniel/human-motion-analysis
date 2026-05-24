@@ -76,3 +76,20 @@ body {
     background-color: rgba(143, 157, 217, 1);
 }
 
+.page-cover {
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    padding: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#processing-preview {
+    max-width: 75vw;
+    max-height: 75vh;
+}
+
+

@@ -1,11 +1,11 @@
 import cv2
 from ultralytics import YOLO
 import numpy as np
-import pose.Engine as Engine
+import src.pose.Engine as Engine
 import os
 
 def get_data(show=False, user_video=None):
-    yolo = YOLO("../assets/yolo26_models/yolo26x-pose.pt")
+    yolo = YOLO("assets/yolo26_models/yolo26x-pose.pt")
     valid_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
     all_data = []
@@ -15,7 +15,7 @@ def get_data(show=False, user_video=None):
 
     for video in videos:
         Engine.apply_filters(video)
-        cap = cv2.VideoCapture(f'../assets/filtered_videos/{os.path.splitext(os.path.basename(video))[0]}.mp4')
+        cap = cv2.VideoCapture(f'assets/filtered_videos/{os.path.splitext(os.path.basename(video))[0]}.mp4')
 
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -45,14 +45,14 @@ def get_data(show=False, user_video=None):
         results = yolo.predict(
             source=video,
             save=True if user_video else False,
-            project="../../outputs/videos",
+            project="../outputs/videos",
             name="overlays",
             exist_ok=True,
             show=show,
             show_boxes=False)
         if user_video:
-            os.rename(f"../outputs/videos/overlays/{os.path.splitext(os.path.basename(video))[0]}.mp4",
-                      "../outputs/videos/overlays/full_overlay.mp4")
+            os.rename(f"outputs/videos/overlays/{os.path.splitext(os.path.basename(video))[0]}.mp4",
+                      "outputs/videos/overlays/full_overlay.mp4")
 
         for curr_frame, result in enumerate(results):
             current_pose = result.keypoints.xy[0].clone()

@@ -1,7 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
-import pose.Engine as Engine
+import src.pose.Engine as Engine
 import os
 
 def get_data(show=False, user_video=None):
@@ -25,7 +25,7 @@ def get_data(show=False, user_video=None):
 
     for video in videos:
         Engine.apply_filters(video)
-        cap = cv2.VideoCapture(f'../assets/filtered_videos/{os.path.splitext(os.path.basename(video))[0]}.mp4')
+        cap = cv2.VideoCapture(f'assets/filtered_videos/{os.path.splitext(os.path.basename(video))[0]}.mp4')
 
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))

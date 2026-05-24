@@ -15,29 +15,36 @@
     <h1>Pocket MAC</h1> Motion Analysis Coach -->
 
     <h1>Mac Now</h1>
-    <div class="center-box">
-        <label for="input-video" class="center-box upload-box">
-            <input type="file" id="input-video" accept="video/*">
-            <h2 id="upload-text">Click or Drag Video Here to Analyze</h2>
-            <video id="video-preview" controls style="display: none; max-width: 100%; height: auto;"></video>
-        </label>
+    <div id="options-screen" class="page-cover">
+        <div class="center-box">
+            <label for="input-video" class="center-box upload-box">
+                <input type="file" id="input-video" accept="video/*">
+                <h2 id="upload-text">Click or Drag Video Here to Analyze</h2>
+                <video id="video-preview" controls style="display: none; max-width: 100%; height: auto;"></video>
+            </label>
+        </div>
+
+        <div class="choice-bar center">
+            <div id="mediapipe" class="choice mediapipe">Mediapipe</div>
+            <div id="mmpose" class="choice mmpose">MMPose</div>
+            <div id="yolo26" class="choice yolo26">YOLO26</div>
+        </div>
+
+        <div class="choice-bar center">
+            <div id="show-process" class="choice show-process">Show Process</div>
+        </div>
+
+        <div class="choice-bar center">
+            <div id="start-button" class="choice">READY TO GO</div>
+        </div>
     </div>
-
-    <div class="choice-bar center">
-        <div id="mediapipe" class="choice mediapipe">Mediapipe</div>
-        <div id="mmpose" class="choice mmpose">MMPose</div>
-        <div id="yolo26" class="choice yolo26">YOLO26</div>
+    
+    <div id="processing-screen" class="page-cover hidden">
+        <div class="center-box">
+            <h1 id="processing-text">Processing...</h1>
+            <img alt="Processing Display" id="processing-preview">
+        </div>
     </div>
-
-    <div class="choice-bar center">
-        <div id="show-process" class="choice show-process">Show Process</div>
-    </div>
-
-    <div class="choice-bar center">
-        <div id="start-button" class="choice">READY TO GO</div>
-    </div>
-
-
     
 
     <script src="../logic/homepage.js"></script>

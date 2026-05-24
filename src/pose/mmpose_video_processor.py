@@ -4,18 +4,19 @@ import os
 import sys
 from unittest.mock import MagicMock
 import time
-import pose.Engine as Engine
+from src.pose import Engine
+from src import shared
 
 def get_data(show=False, user_video=None):
     mock_ext = MagicMock()
     mock_ext.__spec__ = MagicMock()
     sys.modules['mmcv._ext'] = mock_ext
 
-    os.environ['TORCH_HOME'] = '../mmpose'
+    os.environ['TORCH_HOME'] = 'mmpose'
 
     from mmpose.apis import inference_topdown, init_model
 
-    config_file = "../mmpose/configs/wholebody_2d_keypoint/rtmpose/cocktail14/rtmw-l_8xb320-270e_cocktail14-384x288.py"
+    config_file = "mmpose/configs/wholebody_2d_keypoint/rtmpose/cocktail14/rtmw-l_8xb320-270e_cocktail14-384x288.py"
     checkpoint_file = "https://download.openmmlab.com/mmpose/v1/projects/rtmw/rtmw-dw-x-l_simcc-cocktail14_270e-384x288-20231122.pth"
 
     model = init_model(config_file, checkpoint_file, device='cpu')
@@ -28,8 +29,11 @@ def get_data(show=False, user_video=None):
     videos = Engine.find_videos(user_video)
 
     for video in videos:
+        import queue
+        shared.shared_queues[os.path.basename(video)] = queue.Queue(maxsize=50)
+
         Engine.apply_filters(video)
-        cap = cv2.VideoCapture(f'../assets/filtered_videos/{os.path.splitext(os.path.basename(video))[0]}.mp4')
+        cap = cv2.VideoCapture(f'assets/filtered_videos/{os.path.splitext(os.path.basename(video))[0]}.mp4')
 
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -162,15 +166,22 @@ def get_data(show=False, user_video=None):
 
                     cv2.circle(canvas, lm2, 10, (255, 255, 255), -1)
 
-
             if user_video:
                 user_skeleton.write(canvas)
                 user_overlay.write(frame)
 
             if show:
-                cv2.imshow(f'MMPose Processing Preview: {os.path.basename(video)}', frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                ret, buffer = cv2.imencode('.jpg', frame)
+                if ret:
+                    frame_bytes = buffer.tobytes()
+                    formatted_frame = (b'--frame\r\n'
+                                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')        
+                    try:
+                        print('adding frame to stream')
+                        shared.shared_queues[os.path.basename(video)].put_nowait(formatted_frame)
+                    except queue.Full:
+                        print('stream queue full')
+                        pass         
 
             print(f"Frame: {curr_frame + 1}/{frame_count} Saved")
 
@@ -178,7 +189,8 @@ def get_data(show=False, user_video=None):
         if user_video:
             user_skeleton.release()
             user_overlay.release()
-            cv2.destroyAllWindows()
+            
+        shared.shared_queues[os.path.basename(video)].put(None)
 
         # smooth angle data to reduce noise
         smooth_window = 3

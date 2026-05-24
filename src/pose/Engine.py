@@ -31,7 +31,7 @@ def find_videos(user_video=None):
     if user_video:
         videos = [user_video]
     else:
-        video_folder = "../data/training"
+        video_folder = "data/training"
         for filename in os.listdir(video_folder):
             if filename == ".gitkeep": continue
             full_path = os.path.join(video_folder, filename)
@@ -42,27 +42,27 @@ def find_videos(user_video=None):
 
 def apply_filters(video):
     video_name = os.path.splitext(os.path.basename(video))[0]
-    if os.path.isfile(f'../assets/filtered_videos/{video_name}.mp4'):
+    if os.path.isfile(f'assets/filtered_videos/{video_name}.mp4'):
         return
     (
         ffmpeg
         .input(video)
         # 3. Boost contrast to help the AI see limbs against the treadmill
         .filter('eq', contrast=1.3, brightness=0.02)
-        .output(f'../assets/filtered_videos/{video_name}.mp4', pix_fmt='yuv420p', crf=18)
+        .output(f'assets/filtered_videos/{video_name}.mp4', pix_fmt='yuv420p', crf=18)
         .run(overwrite_output=True)
     )
 
 def init_user_videos(width, height, fps):
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     user_skeleton = cv2.VideoWriter(
-        "../outputs/videos/user_skeleton/user_skeleton.mp4",
+        "outputs/videos/user_skeleton/user_skeleton.mp4",
         fourcc,
         fps,
         (width, height)
     )
     user_overlay = cv2.VideoWriter(
-        "../outputs/videos/overlays/full_overlay.mp4",
+        "outputs/videos/overlays/full_overlay.mp4",
         fourcc,
         fps,
         (width, height)

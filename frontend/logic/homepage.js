@@ -16,8 +16,8 @@ let showProcess = false;
 inputVideo.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (file) {
-        videoFile = URL.createObjectURL(file);
-        videoPreview.src = videoFile;
+        videoFile = file;
+        videoPreview.src = URL.createObjectURL(videoFile);
         videoPreview.style.display = 'block';
         uploadText.textContent = 'Video Preview:';
     }
@@ -82,38 +82,46 @@ showProcessButton.addEventListener('click', () => {
     }
 });
 
-startButton.addEventListener('click', () => {
+startButton.addEventListener('click', (event) => {
+    event.preventDefault();
     if (!(videoFile && selectedModel)) {
-        alert('Please upload a video and select a model before starting the analysis.');
+        // alert('Please upload a video and select a model before starting the analysis.');
         return;
     }
     sendDataToBackend(videoFile, selectedModel, showProcess);
 });
 
 async function sendDataToBackend(videoFile, selectedModel, showProcess) {
-    const userInput = {
-        user_video: videoFile,
-        model: selectedModel,
-        show: showProcess
-    };
+    const processingScreen = document.getElementById('processing-screen');
+    const optionsScreen = document.getElementById('options-screen');
+    const processingText = document.getElementById('processing-text');
+    const processingPreview = document.getElementById('processing-preview');
+    alert(`Video File: ${videoFile.name}`);
 
-    alert(`Starting analysis.\nInput Video: ${videoFile}\nUsing model: ${selectedModel}\nShow process: ${showProcess}`);
+    processingPreview.src = `http://127.0.0.1:8000/processing_preview?filename=${videoFile.name}`;
+
+    optionsScreen.classList.add('hidden');
+    optionsScreen.style.opacity = '0';
+    processingScreen.classList.remove('hidden');
+
+    const userInput = new FormData();
+    userInput.append('video_file', videoFile);
+    userInput.append('model', selectedModel);
+    userInput.append('show', showProcess);
 
     try {
-        const response = await fetch('/inputs', {
+        const response = await fetch('http://127.0.0.1:8000/inputs', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(userInput)
+            body: userInput
         });
 
         const results = await response.json();
+        // add results displaying here
 
-        if (results.status === 'Success') {
-            alert('Analysis completed successfully!');
-        }
     } catch (error) {
         console.error('Error sending data to backend:', error);
-        alert(`${error}. Please try again.`);
+        alert(error.message);
     }
 
 }
+
