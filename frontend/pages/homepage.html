@@ -42,10 +42,59 @@
     <div id="processing-screen" class="page-cover hidden">
         <div class="center-box">
             <h1 id="processing-text">Processing...</h1>
-            <img alt="Processing Display" id="processing-preview">
+            <img src="../../docs/loading_screen.gif" alt="Processing Display" id="processing-preview">
+            <h1 id="loading-counter">0 frames processed</h1>
         </div>
     </div>
     
+    <div id="results-screen" class="page-cover hidden">
+        <h1 class="center">Dashboard</h1>
+        <div class="center">
+            <video id="dashboard-video" controls></video>
+        </div>
+
+        <div>
+            <h1 class="center">Overlays Videos</h1>
+            <div id="results-container" class="choice-bar center">
+                <div>
+                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_ground_contact.mp4" target="_blank" rel="noopener noreferrer">
+                        <div class="choice">Right Ground Contact</div>
+                    </a>
+                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_propulsion.mp4" target="_blank" rel="noopener noreferrer">
+                        <div class="choice">Right Propulsion</div>
+                    </a>
+                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_flight.mp4" target="_blank" rel="noopener noreferrer">
+                        <div class="choice">Right Flight</div>
+                    </a>
+                </div>
+                <div>
+                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_ground_contact.mp4" target="_blank" rel="noopener noreferrer">
+                        <div class="choice">Left Ground Contact</div>
+                    </a>
+                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_propulsion.mp4" target="_blank" rel="noopener noreferrer">
+                        <div class="choice">Left Propulsion</div>
+                    </a>
+                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_flight.mp4" target="_blank" rel="noopener noreferrer">
+                        <div class="choice">Left Flight</div>
+                    </a>
+                </div>
+            </div>
+
+            <h1 class="center">Graphs</h1>
+            <div id="results-container" class="choice-bar center">
+                <div>
+                    <div class="choice">Right Ground Contact</div>
+                    <div class="choice">Right Propulsion</div>
+                    <div class="choice">Right Flight</div>
+                </div>
+                <div>
+                    <div class="choice">Left Ground Contact</div>
+                    <div class="choice">Left Propulsion</div>
+                    <div class="choice">Left Flight</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="../logic/homepage.js"></script>
 </body>

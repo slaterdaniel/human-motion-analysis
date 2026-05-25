@@ -1,14 +1,17 @@
-from fastapi import FastAPI, UploadFile, Form, File
+from fastapi import FastAPI, UploadFile, Form, File, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from src.using_tool import analyze
-from src import shared
 import traceback
 import shutil
-import time
 import queue
+import asyncio
 
 app = FastAPI()
+app.mount('/outputs', StaticFiles(directory="outputs"))
+
+frame_queue = queue.Queue(maxsize=2)
+video_metadata = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,7 +42,8 @@ async def processInputs(
         shutil.copyfileobj(video_file.file, buffer)
 
     try:
-        outputs = analyze(
+        outputs = await asyncio.to_thread(
+            analyze,
             user_video=user_video,
             engine=model,
             show=show,
@@ -59,34 +63,30 @@ async def processInputs(
             "error_type": type(e).__name__,
             "error_message": str(e)
         }
-    
-def get_processing_preview(filename: str):
-    start_time = time.time()
-    while filename not in shared.shared_queues:
-        time.sleep(0.1)
-        if time.time() - start_time > 10:
-            print(f"\n\n!!! Timeout: No processing preview available for {filename} after 10 seconds !!!\n\n")
-            return
-    
-    q = shared.shared_queues.get(filename)
 
-    while True:
-        try:
-            frame = q.get(timeout=2)
-            if not frame:
+@app.websocket('/ws')
+async def image_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while "frame_count" not in video_metadata:
+            await asyncio.sleep(0.05)
+
+        await websocket.send_json({
+            "type": "init",
+            "frame_count": video_metadata["frame_count"]
+        })
+
+        while True:
+            frame = await asyncio.to_thread(frame_queue.get)
+            if frame is None:
                 break
-            print(f'frame sending')
-            yield frame
+            await websocket.send_bytes(frame)
 
-        except queue.Empty:
-            print('No frame received in the last 2 seconds, ending stream.')
-            break
+    except Exception as e:
+        print(f'WebSocket error: {e}')
 
-    shared.shared_queues.pop(filename, None)
-
-@app.get('/processing_preview')
-async def processing_preview(filename: str):
-    return StreamingResponse(get_processing_preview(filename), media_type='multipart/x-mixed-replace; boundary=frame')
+    finally:
+        await websocket.close()
 
 
 

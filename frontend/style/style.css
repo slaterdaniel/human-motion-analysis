@@ -7,6 +7,11 @@ body {
     position: relative;
 }
 
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
 .upload-box {
     padding-top: 10vh;
     padding-bottom: 10vh;
@@ -44,8 +49,6 @@ body {
 
 .choice-bar {
     display: flex;
-    padding-top: 2vh;
-    padding-bottom: 2vh;
     column-gap: 3vw;
 }
 
@@ -55,6 +58,8 @@ body {
     padding-inline: 3vw;
     padding-top: 3vh;
     padding-bottom: 3vh;
+    margin-top: 1.5vh;
+    margin-bottom: 1.5vh;
     border-radius: 5px;
     transition: 0.3s ease;
     cursor: pointer;
@@ -92,4 +97,8 @@ body {
     max-height: 75vh;
 }
 
-
+#dashboard-video {
+    max-width: 80vw;
+    max-height: 80vh;
+    justify-content: center;
+}

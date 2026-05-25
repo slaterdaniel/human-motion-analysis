@@ -94,14 +94,48 @@ startButton.addEventListener('click', (event) => {
 async function sendDataToBackend(videoFile, selectedModel, showProcess) {
     const processingScreen = document.getElementById('processing-screen');
     const optionsScreen = document.getElementById('options-screen');
-    const processingText = document.getElementById('processing-text');
+    const resultsScreen = document.getElementById('results-screen');
     const processingPreview = document.getElementById('processing-preview');
-    alert(`Video File: ${videoFile.name}`);
 
-    processingPreview.src = `http://127.0.0.1:8000/processing_preview?filename=${videoFile.name}`;
+    const loadingCounter = document.getElementById('loading-counter');    
+    const webSocket = new WebSocket('ws://127.0.0.1:8000/ws');
+    webSocket.binaryType = 'blob';
+
+    let currentUrl = null;
+    let frameCount = 0;
+    let totalFrames = '0';
+
+    webSocket.onmessage = (event) => {
+        if (typeof event.data === 'string') {
+            const message = JSON.parse(event.data);
+            totalFrames = message.frame_count;
+            return;
+        }
+        if (currentUrl) {
+            URL.revokeObjectURL(currentUrl);
+        }
+
+        currentUrl = URL.createObjectURL(event.data);
+
+        processingPreview.src = currentUrl;
+        frameCount++;
+        loadingCounter.innerText = `${frameCount}/${totalFrames} frames processed`;
+
+        if (frameCount == totalFrames) {
+            processingText = document.getElementById('processing-text');
+            processingText.innerText = 'Processing complete! Constructing results...';
+        }
+    };
+
+    webSocket.onclose = () => {
+        console.log('WebSocket closed');
+    };
+
+    webSocket.onerror = (error) => {
+        console.log(error);
+    };
 
     optionsScreen.classList.add('hidden');
-    optionsScreen.style.opacity = '0';
     processingScreen.classList.remove('hidden');
 
     const userInput = new FormData();
@@ -117,6 +151,11 @@ async function sendDataToBackend(videoFile, selectedModel, showProcess) {
 
         const results = await response.json();
         // add results displaying here
+        processingScreen.classList.add('hidden');
+        resultsScreen.classList.remove('hidden');
+
+        const dashboardVideo = document.getElementById('dashboard-video');
+        dashboardVideo.src = 'http://127.0.0.1:8000/outputs/videos/dashboard/dashboard.mp4';
 
     } catch (error) {
         console.error('Error sending data to backend:', error);

@@ -2,9 +2,14 @@ from tensorflow.keras.models import load_model
 import cv2
 import numpy as np
 import pickle
+
+import matplotlib
+matplotlib.use('agg')
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.ticker import FuncFormatter
+
 import plotly.graph_objects as go
 import os
 from src.pose import Engine
@@ -934,6 +939,4 @@ Seconds: {left_contact_lengths / 30}
 
     print('Dashboard Video Saved\n\nPROCESS COMPLETE')
 
-    return {'contacts': 1,
-            'spm': 2,
-            'video': 3}
+    return {'results': 'bueno'}
