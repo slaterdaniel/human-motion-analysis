@@ -1,10 +1,7 @@
-* {
-    padding-inline: 1vw;
-}
-
 body {
     background-color: rgb(230, 217, 150);
     position: relative;
+    padding-inline: 3vw;
 }
 
 a {
@@ -49,10 +46,14 @@ a {
 
 .choice-bar {
     display: flex;
-    column-gap: 3vw;
+    column-gap: 1vw;
+    padding-right: 1vw;
 }
 
 .choice {
+    box-sizing: border-box;
+    height: 8vh;
+    width: 20vw;
     user-select: none;
     background-color: aliceblue;
     padding-inline: 3vw;
@@ -63,6 +64,23 @@ a {
     border-radius: 5px;
     transition: 0.3s ease;
     cursor: pointer;
+}
+
+#site-search {
+    cursor: text;
+    border: none; 
+    box-sizing: border-box; 
+    height: 8vh;  
+    width: 20vw;
+    background-color: aliceblue;
+    padding-inline: 3vw;
+    padding-top: 3vh;
+    padding-bottom: 3vh;
+    margin-top: 1.5vh;
+    margin-bottom: 1.5vh;
+    border-radius: 5px;
+    transition: 0.3s ease;     
+    font-size: large;
 }
 
 .choice:hover {
@@ -101,4 +119,12 @@ a {
     max-width: 80vw;
     max-height: 80vh;
     justify-content: center;
+}
+
+.featureButton {
+    background-color: rgb(157, 255, 217);
+}
+
+.graph {
+    background-color: rgb(194, 130, 255);
 }

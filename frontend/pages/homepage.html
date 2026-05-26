@@ -47,51 +47,58 @@
         </div>
     </div>
     
-    <div id="results-screen" class="page-cover hidden">
-        <h1 class="center">Dashboard</h1>
-        <div class="center">
-            <video id="dashboard-video" controls></video>
+
+
+
+    <div id="results-screen" class="hidden page-cover choice-bar">
+        <div style="border-inline: 2px solid; padding: 1vw;">
+            <h1>Dashboard</h1>
+            <div>
+                <video id="dashboard-video" controls src="http://127.0.0.1:8000/outputs/videos/dashboard/dashboard.mp4"></video>
+            </div>
+        </div>
+        
+        <div>
+            <h1>Overlays Videos</h1>
+            <div id="overlays-container" style="margin-right: 1vw;">
+                <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_ground_contact.mp4" target="_blank" rel="noopener noreferrer">
+                    <div class="choice">Right Ground Contact</div>
+                </a>
+                <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_propulsion.mp4" target="_blank" rel="noopener noreferrer">
+                    <div class="choice">Right Propulsion</div>
+                </a>
+                <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_flight.mp4" target="_blank" rel="noopener noreferrer">
+                    <div class="choice">Right Flight</div>
+                </a>
+                <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_ground_contact.mp4" target="_blank" rel="noopener noreferrer">
+                    <div class="choice">Left Ground Contact</div>
+                </a>
+                <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_propulsion.mp4" target="_blank" rel="noopener noreferrer">
+                    <div class="choice">Left Propulsion</div>
+                </a>
+                <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_flight.mp4" target="_blank" rel="noopener noreferrer">
+                    <div class="choice">Left Flight</div>
+                </a>
+            </div>
         </div>
 
-        <div>
-            <h1 class="center">Overlays Videos</h1>
-            <div id="results-container" class="choice-bar center">
-                <div>
-                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_ground_contact.mp4" target="_blank" rel="noopener noreferrer">
-                        <div class="choice">Right Ground Contact</div>
-                    </a>
-                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_propulsion.mp4" target="_blank" rel="noopener noreferrer">
-                        <div class="choice">Right Propulsion</div>
-                    </a>
-                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_flight.mp4" target="_blank" rel="noopener noreferrer">
-                        <div class="choice">Right Flight</div>
-                    </a>
-                </div>
-                <div>
-                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_ground_contact.mp4" target="_blank" rel="noopener noreferrer">
-                        <div class="choice">Left Ground Contact</div>
-                    </a>
-                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_propulsion.mp4" target="_blank" rel="noopener noreferrer">
-                        <div class="choice">Left Propulsion</div>
-                    </a>
-                    <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_flight.mp4" target="_blank" rel="noopener noreferrer">
-                        <div class="choice">Left Flight</div>
-                    </a>
-                </div>
-            </div>
-
-            <h1 class="center">Graphs</h1>
-            <div id="results-container" class="choice-bar center">
-                <div>
-                    <div class="choice">Right Ground Contact</div>
-                    <div class="choice">Right Propulsion</div>
-                    <div class="choice">Right Flight</div>
-                </div>
-                <div>
-                    <div class="choice">Left Ground Contact</div>
-                    <div class="choice">Left Propulsion</div>
-                    <div class="choice">Left Flight</div>
-                </div>
+        <div style="border-inline: 2px solid; padding: 1vw;">
+            <h1>Graph Search</h1>
+            <div id="results-container" style="margin-right: 1vw; max-height: 75vh; overflow-y: auto;
+">
+                <input type="search" id="site-search" placeholder="Search For Graphs. . .">
+                <a id="stride-frequency" class="graph" href="http://127.0.0.1:8000/outputs/graphs/Stride_Frequency/Stride_Frequency.png" target="_blank" rel="noopener noreferrer">
+                    <div class="choice basic-graph">Stride Frequency</div>
+                </a>
+                <a id="phase-breakdown-comparison" class="graph" href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/phase_breakdown_comparison.html" target="_blank" rel="noopener noreferrer">
+                    <div class="choice basic-graph">Phase Breakdown Comparison</div>
+                </a>
+                <a id="individual-phase-deviation" class="graph" href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/Phase_Z-Scores.png" target="_blank" rel="noopener noreferrer">
+                    <div class="choice basic-graph">Individual Phase Deviation</div>
+                </a>
+                <a id="total-form-deviation" class="graph" href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/Total_Z-Score.png" target="_blank" rel="noopener noreferrer">
+                    <div class="choice basic-graph">Total Form Deviation</div>
+                </a>
             </div>
         </div>
     </div>

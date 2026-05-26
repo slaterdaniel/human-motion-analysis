@@ -13,6 +13,7 @@ from matplotlib.ticker import FuncFormatter
 import plotly.graph_objects as go
 import os
 from src.pose import Engine
+from src.pose.features import FEATURE_STRINGS
 
 # KEY:
 # rgc = right ground contact
@@ -208,10 +209,6 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     print(f"{os.path.basename(file):<25} Successfully Saved")
 
 def analyze(user_video, engine, show):
-    # return {'contacts': 1,
-    #         'spm': 2,
-    #         'video': 3}
-
     graph_saving = False
 
     if engine == 'mediapipe':
@@ -232,65 +229,6 @@ def analyze(user_video, engine, show):
     # raw user data = array where shape=[feature, frame]
     user_data, raw_data = video_processor.get_data(show=show, user_video=user_video)
     raw_data = raw_data.T
-
-    FEATURE_STRINGS = [
-
-        # First 10 Values = Body Angles
-        'RIGHT SHOULDER ANGLE',
-        'LEFT SHOULDER ANGLE',
-        'RIGHT ELBOW ANGLE',
-        'LEFT ELBOW ANGLE',
-        'RIGHT HIP ANGLE',
-        'LEFT HIP ANGLE',
-        'RIGHT KNEE ANGLE',
-        'LEFT KNEE ANGLE',
-        'RIGHT ANKLE ANGLE',
-        'LEFT ANKLE ANGLE',
-
-        # Next 10 Values = Body Angle Velocities
-        'RIGHT SHOULDER ANGLE VELOCITY',
-        'LEFT SHOULDER ANGLE VELOCITY',
-        'RIGHT ELBOW ANGLE VELOCITY',
-        'LEFT ELBOW ANGLE VELOCITY',
-        'RIGHT HIP ANGLE VELOCITY',
-        'LEFT HIP ANGLE VELOCITY',
-        'RIGHT KNEE ANGLE VELOCITY',
-        'LEFT KNEE ANGLE VELOCITY',
-        'RIGHT ANKLE ANGLE VELOCITY',
-        'LEFT ANKLE ANGLE VELOCITY',
-
-        # Final 30 = mediapipe landmark coordinates
-        'NOSE X',
-        'NOSE Y',
-        'LEFT SHOULDER X',
-        'LEFT SHOULDER Y',
-        'RIGHT SHOULDER X',
-        'RIGHT SHOULDER Y',
-        'LEFT ELBOW X',
-        'LEFT ELBOW Y',
-        'RIGHT ELBOW X',
-        'RIGHT ELBOW Y',
-        'LEFT WRIST X',
-        'LEFT WRIST Y',
-        'RIGHT WRIST X',
-        'RIGHT WRIST Y',
-        'LEFT HIP X',
-        'LEFT HIP Y',
-        'RIGHT HIP X',
-        'RIGHT HIP Y',
-        'LEFT KNEE X',
-        'LEFT KNEE Y',
-        'RIGHT KNEE X',
-        'RIGHT KNEE Y',
-        'LEFT ANKLE X',
-        'LEFT ANKLE Y',
-        'RIGHT ANKLE X',
-        'RIGHT ANKLE Y',
-        'LEFT FOOT X',
-        'LEFT FOOT Y',
-        'RIGHT FOOT X',
-        'RIGHT FOOT Y',
-    ]
 
     # Median Absolute Deviation (MAD) and medians of features in reference data
     with open('assets/phase_statistics/phase_statistics.pkl', 'rb') as f:
@@ -723,8 +661,7 @@ Seconds: {left_contact_lengths / 30}
         name='Phase Breakdown',
         line_color='red'
     ))
-    # phase_score_fig.write_html('outputs/graphs/phase_averages.html', auto_open=False) # <-- USE HTML FOR FINAL PRODUCT
-    phase_score_fig.write_image('outputs/graphs/phase_breakdown/phase_breakdown_comparison.png', width=800, height=600, scale=2)
+    phase_score_fig.write_html('outputs/graphs/phase_breakdown/phase_breakdown_comparison.html', auto_open=False) # <-- USE HTML FOR FINAL PRODUCT
     print(f"{'Phase Breakdown Data':<25} Successfully Saved\n")
 
     print("Saving Phase Overlay Videos:")

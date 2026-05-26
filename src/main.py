@@ -69,7 +69,7 @@ async def image_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while "frame_count" not in video_metadata:
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0.1)
 
         await websocket.send_json({
             "type": "init",

@@ -3,6 +3,7 @@ import mediapipe as mp
 import numpy as np
 import src.pose.Engine as Engine
 import os
+from src.main import frame_queue, video_metadata
 
 def get_data(show=False, user_video=None):
     mp_pose = mp.solutions.pose
@@ -36,6 +37,8 @@ def get_data(show=False, user_video=None):
 
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         data = np.zeros((frame_count, 50))  # 50 features
+
+        video_metadata['frame_count'] = frame_count
 
         for curr_frame in range(frame_count):
             ret, frame = cap.read()
@@ -180,17 +183,28 @@ def get_data(show=False, user_video=None):
                     user_overlay.write(frame)
 
                 if show:
-                    cv2.imshow(f'Mediapipe Processing Preview: {os.path.basename(video)}', frame)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
+                    _, buffer = cv2.imencode(
+                        '.jpg',
+                        frame,
+                        [cv2.IMWRITE_JPEG_QUALITY, 40]
+                    )
+
+                    while frame_queue.full():
+                        frame_queue.get_nowait()
+
+                    frame_queue.put_nowait(buffer.tobytes())
 
                 print(f"Frame: {curr_frame + 1}/{frame_count} Saved")
+
+        while frame_queue.full():
+            frame_queue.get_nowait()
+
+        frame_queue.put_nowait(None)
 
         cap.release()
         if user_video:
             user_skeleton.release()
             user_overlay.release()
-            cv2.destroyAllWindows()
 
         # smooth angle data to reduce noise
         smooth_window = 3
