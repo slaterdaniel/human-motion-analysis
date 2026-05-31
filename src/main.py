@@ -79,6 +79,7 @@ async def image_endpoint(websocket: WebSocket):
         while True:
             frame = await asyncio.to_thread(frame_queue.get)
             if frame is None:
+                print('\n\n!!! FRAME NOT FOUND: BREAKING !!!\n\n')
                 break
             await websocket.send_bytes(frame)
 
