@@ -5,58 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Human Motion Analysis</title>
     <link rel="stylesheet" href="../style/style.css">
+    <link rel="stylesheet" href="../style/resultspage.css">
 </head>
 <body>
     <div id="results-screen" class="page-cover choice-bar">
-        <div style="border-inline: 2px solid; padding: 1vw;">
+        <div>
             <h1>Dashboard</h1>
             <div>
                 <video id="dashboard-video" controls src="http://127.0.0.1:8000/outputs/videos/dashboard/dashboard.mp4"></video>
             </div>
         </div>
-        
-        <div>
-            <h1>Overlays Videos</h1>
-            <div id="overlays-container" style="margin-right: 1vw;">
-                <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_ground_contact.mp4" target="_blank" rel="noopener noreferrer">
-                    <div class="choice">Right Ground Contact</div>
-                </a>
-                <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_propulsion.mp4" target="_blank" rel="noopener noreferrer">
-                    <div class="choice">Right Propulsion</div>
-                </a>
-                <a href="http://127.0.0.1:8000/outputs/videos/overlays/right_flight.mp4" target="_blank" rel="noopener noreferrer">
-                    <div class="choice">Right Flight</div>
-                </a>
-                <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_ground_contact.mp4" target="_blank" rel="noopener noreferrer">
-                    <div class="choice">Left Ground Contact</div>
-                </a>
-                <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_propulsion.mp4" target="_blank" rel="noopener noreferrer">
-                    <div class="choice">Left Propulsion</div>
-                </a>
-                <a href="http://127.0.0.1:8000/outputs/videos/overlays/left_flight.mp4" target="_blank" rel="noopener noreferrer">
-                    <div class="choice">Left Flight</div>
-                </a>
+        <div style="margin-inline: 2.5vw">
+            <h1>Metrics</h1>
+            <div id="analysis-box-container">
+                <div class="analysis-box" style="border-bottom: black solid 2px;">
+                    <h2>Total Form Analysis</h2>
+                    <ul>
+                        <li><a href="http://127.0.0.1:8000/outputs/metrics/Ground_Contact_Timing.txt"><h3>GCT</h3></a></li>
+                        <li><a href="http://127.0.0.1:8000/outputs/graphs/Stride_Frequency/Stride_Frequency.png"><h3>Cadence</h3></a></li>
+                        <li><a href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/Total_Z-Score.png"><h3>Total Form Similarity</h3></a></li>
+                    </ul>
+                    <p>see more -></p>
+                </div>
+                <div class="analysis-box" style="border-bottom: black solid 2px;">
+                    <h2>Phase Analysis</h2>
+                    <ul>
+                        <li><a href="http://127.0.0.1:8000/outputs/videos/overlays/full_overlay.mp4"><h3>Overlays</h3></a></li>
+                        <li><a href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/phase_breakdown_comparison.html"><h3>Form Breakdown</h3></a></li>
+                        <li><a href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/Phase_Z-Scores"><h3>Similarity</h3></a></li>
+                    </ul>
+                    <p>see more -></p>
+                </div>
+                <div class="analysis-box">
+                    <h2>Individual Features</h2>
+                    <div id="results-container" style="margin-right: 1vw; max-height: 25vh; overflow-y: auto;">
+                        <input type="search" id="site-search" placeholder="Search For Graphs. . .">
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div style="border-inline: 2px solid; padding: 1vw;">
-            <h1>Graph Search</h1>
-            <div id="results-container" style="margin-right: 1vw; max-height: 75vh; overflow-y: auto;">
-                <input type="search" id="site-search" placeholder="Search For Graphs. . .">
-                <a id="stride-frequency" class="graph" href="http://127.0.0.1:8000/outputs/graphs/Stride_Frequency/Stride_Frequency.png" target="_blank" rel="noopener noreferrer">
-                    <div class="choice basic-graph">Stride Frequency</div>
-                </a>
-                <a id="phase-breakdown-comparison" class="graph" href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/phase_breakdown_comparison.html" target="_blank" rel="noopener noreferrer">
-                    <div class="choice basic-graph">Phase Breakdown Comparison</div>
-                </a>
-                <a id="individual-phase-deviation" class="graph" href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/Phase_Z-Scores.png" target="_blank" rel="noopener noreferrer">
-                    <div class="choice basic-graph">Individual Phase Deviation</div>
-                </a>
-                <a id="total-form-deviation" class="graph" href="http://127.0.0.1:8000/outputs/graphs/phase_breakdown/Total_Z-Score.png" target="_blank" rel="noopener noreferrer">
-                    <div class="choice basic-graph">Total Form Deviation</div>
-                </a>
+        <div class="circle-wrapper">
+            <div class="circle">
+                <div id="circle-overlay">
+                    <div id="text">0%</div>
+                </div>
             </div>
         </div>
-    </div>
     <script src="../logic/resultspage.js"></script>
 </body>

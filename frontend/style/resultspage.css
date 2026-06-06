@@ -1,0 +1,42 @@
+* {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#analysis-box-container {
+    border: black solid 2px;
+    border-radius: 10px;
+}
+
+.analysis-box {
+    padding-inline: 50px;
+}
+
+.circle {
+    height: 35%;
+    aspect-ratio: 1; 
+    border-radius: 50%;
+    justify-items: center;
+    align-content: center;
+    background: conic-gradient(rgb(153, 234, 153) 250deg, white 0deg);
+    box-shadow: 6px 6px 20px 1px rgb(0, 0, 0, 0.5)
+}
+
+#circle-overlay {
+    height: 70%;
+    aspect-ratio: 1; 
+    border-radius: 50%;
+    background: rgb(255, 255, 255);
+    justify-items: center;
+    align-content: center;
+}
+
+#text {
+    font-size: 3.8vh;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.circle-wrapper {
+    width: 100%; 
+    justify-items: center;
+    margin-top: 3vh;
+}
