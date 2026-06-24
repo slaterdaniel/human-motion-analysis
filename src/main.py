@@ -32,10 +32,9 @@ async def processInputs(
         model: str = Form(...),
         show: bool = Form(...)
 ):
-    print('\n🚀 TRYING TO RUN PIPELINE...\n')
-    print(f"Received file: {video_file.filename}")
-    print(f"Received model: {model}")
-    print(f"Received show flag: {show}")
+    print(f"File: {video_file.filename}")
+    print(f"Model: {model}")
+    print(f"Show: {show}")
 
     user_video = f'data/user_input/{video_file.filename}'
     with open(user_video, "wb") as buffer:
@@ -55,7 +54,7 @@ async def processInputs(
 
     except Exception as e:
 
-        print("!!! PYTHON PIPELINE CRASHED !!!")
+        print("PYTHON CRASHED")
         traceback.print_exc()
 
         return {
@@ -79,7 +78,7 @@ async def image_endpoint(websocket: WebSocket):
         while True:
             frame = await asyncio.to_thread(frame_queue.get)
             if frame is None:
-                print('\n\n!!! FRAME NOT FOUND: BREAKING !!!\n\n')
+                print('\n\nFRAME NOT FOUND\n\n')
                 break
             await websocket.send_bytes(frame)
 
