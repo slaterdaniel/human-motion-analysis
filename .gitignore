@@ -15,6 +15,7 @@ Sprint_Analysis
 *.pt
 *.pth
 *.pkl
+*.csv
 *.png
 *.txt
 
