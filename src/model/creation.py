@@ -46,7 +46,7 @@ def create_models(engines):
             model = model_format(window_size, num_features)
 
         elif name == 'yolo26':
-            num_features = 42
+            num_features = 46
             model = model_format(window_size, num_features)
 
         model.summary()

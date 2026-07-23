@@ -87,7 +87,3 @@ async def image_endpoint(websocket: WebSocket):
 
     finally:
         await websocket.close()
-
-
-
-

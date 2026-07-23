@@ -20,9 +20,12 @@ def get_data(show=False, user_video=None):
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(cap.get(cv2.CAP_PROP_FPS))
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         if user_video:
             user_skeleton, user_overlay = Engine.init_user_videos(width, height, fps)
+            user_overlay.release()
+            feature_coords = np.zeros((frame_count, 46))  # 50 features
 
         connections = [
             # Face
@@ -39,17 +42,17 @@ def get_data(show=False, user_video=None):
             (12, 14), (14, 16)  # Right Leg (Hip-Knee-Ankle)
         ]
 
-        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        data = np.zeros((frame_count, 42))  # 42 features
+        data = np.zeros((frame_count, 46))  # 46 features
 
         results = yolo.predict(
             source=video,
             save=True if user_video else False,
-            project="../outputs/videos",
+            project="/Users/danielslater/Documents/human-motion-analysis/outputs/videos",
             name="overlays",
             exist_ok=True,
             show=show,
             show_boxes=False)
+
         if user_video:
             os.rename(f"outputs/videos/overlays/{os.path.splitext(os.path.basename(video))[0]}.mp4",
                       "outputs/videos/overlays/full_overlay.mp4")
@@ -117,12 +120,18 @@ def get_data(show=False, user_video=None):
 
             for i, lm in enumerate(current_pose):
                 if i in valid_landmarks:
-                    x = (lm[0] - center_x) / torso_length
-                    y = (lm[1] - center_y) / torso_length
+                    x = lm[0] - center_x
+                    y = lm[1] - center_y
 
-                    data[curr_frame, 16 + count * 2] = x
-                    data[curr_frame, 17 + count * 2] = y
+                    data[curr_frame, 20 + count * 2] = x / torso_length
+                    data[curr_frame, 21 + count * 2] = y / torso_length
+
+                    if user_video:
+                        feature_coords[curr_frame, 20 + count * 2] = x + (width / 2)
+                        feature_coords[curr_frame, 21 + count * 2] = y + (height / 2)
+
                     count += 1
+
 
             if user_video:
                 # Initialize blank canvas
@@ -160,10 +169,13 @@ def get_data(show=False, user_video=None):
 
         # find angular velocities from smoothed angles
         for i in range(1, len(data)):
-            data[i, 8:16] = data[i, :8] - data[i - 1, :8]
+            data[i, 10:18] = data[i, :8] - data[i - 1, :8]
 
         window_size, border, step = Engine.get_formatting()
         all_raw_data.append(data[border: -border - 1])
+
+        if user_video:
+            feature_coords[:, :18] = data[:, :18]
 
         inputs = []
         for i in range(0, len(data) - window_size, step):
@@ -177,5 +189,8 @@ def get_data(show=False, user_video=None):
 
     all_data = np.concatenate(all_data, axis=0)
     all_raw_data = np.concatenate(all_raw_data, axis=0)
+
+    if user_video:
+        return all_data, all_raw_data, np.array(feature_coords).astype(int)
 
     return all_data, all_raw_data
