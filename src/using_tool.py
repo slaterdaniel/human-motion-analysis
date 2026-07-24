@@ -1,19 +1,17 @@
 from tensorflow.keras.models import load_model
 import cv2
 import numpy as np
+import pandas as pd
 import pickle
-
 import matplotlib
 matplotlib.use('agg')
-
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.ticker import FuncFormatter
-
 import plotly.graph_objects as go
 import os
 from src.pose import Engine
-from src.pose.features import FEATURE_STRINGS
+from src.pose.features import *
 
 # KEY:
 # rgc = right ground contact
@@ -58,7 +56,7 @@ def find_phase_scores(frame_scores, user_predictions, window_size=9):
 
     return np.array(total_scores), np.array(phase_lengths)
 
-def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_data, user_predictions, scored_data, FEATURE_STRINGS, window_size=9):
+def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, window_size=9):
     """
     Saves video of the user's best instance of a phase overlaid on the worst instance
     Args:
@@ -82,7 +80,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
     font = cv2.FONT_HERSHEY_SIMPLEX
     style = cv2.LINE_AA
 
-    vertical = True if height > width else False
+    vertical = height > width
 
     PHASE_STRINGS = ['Right Ground Contact',
                      'Right Propulsion',
@@ -131,10 +129,16 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
         frame_scores = scored_data[:, curr_frame - border]
         score = round(np.sum(frame_scores ** 2), 1)
-        biggest_mistake = np.argmax(np.abs(frame_scores))
+        greatest_deviation = np.argmax(np.abs(frame_scores))
+        
+        # Draw Circle Around Largest Deviation
+        feature_offset = 16 if len(raw_data) == 42 else 20
+        greatest_deviation_coords = (feature_coords[curr_frame, feature_offset + COORDINATE_PAIRS[greatest_deviation][0]],
+                                  feature_coords[curr_frame, feature_offset + COORDINATE_PAIRS[greatest_deviation][1]])
+        cv2.circle(skeleton_frame, greatest_deviation_coords, 40, color, 5)
 
-        error_value = round(raw_data[biggest_mistake, curr_frame - border], 2)
-        reference_value = round(raw_data[biggest_mistake, int(best_start_frame + i) - border], 2)
+        error_value = round(raw_data[greatest_deviation, curr_frame - border], 2)
+        reference_value = round(raw_data[greatest_deviation, int(best_start_frame + i) - border], 2)
 
         skeleton_frame = cv2.hconcat([skeleton_frame, feedback_box]) if vertical else cv2.vconcat([skeleton_frame, feedback_box])
 
@@ -148,7 +152,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
                         (int(width * .8), int(height * .5)), font, 1, color, 2, style)
 
             cv2.putText(skeleton_frame,
-                        f"{FEATURE_STRINGS[biggest_mistake]}:",
+                        f"{FEATURE_STRINGS[greatest_deviation]}:",
                         (int(width * .8), int(height * .6)), font, 1, (255, 255, 255), 2, style)
 
             cv2.putText(skeleton_frame,
@@ -172,7 +176,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
                         (int(width * .25), int(height * 1.05)), font, 1, color, 2, style)
 
             cv2.putText(skeleton_frame,
-                        f"{FEATURE_STRINGS[biggest_mistake]}:",
+                        f"{FEATURE_STRINGS[greatest_deviation]}:",
                         (int(width * .55), int(height * .925)), font, 1, (255, 255, 255), 2, style)
 
             cv2.putText(skeleton_frame,
@@ -197,7 +201,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
             break
         frame = np.clip(frame * [0.5, 1, 0.5], 0, 255).astype(np.uint8)
         frame = cv2.hconcat([frame, feedback_box]) if vertical else cv2.vconcat([frame, feedback_box])
-        skeleton_overlay = cv2.addWeighted(worst[i], 1, frame, 1, 0)
+        skeleton_overlay = cv2.addWeighted(worst[i], 0.6, frame, 1, 0)
 
         concatenate = cv2.hconcat if vertical else cv2.vconcat
         final_frame = concatenate([user_overlay[i], skeleton_overlay])
@@ -227,8 +231,11 @@ def analyze(user_video, engine, show):
 
     # user data = array formatted for 1D CNN 9 frame windows
     # raw user data = array where shape=[feature, frame]
-    user_data, raw_data = video_processor.get_data(show=show, user_video=user_video)
+    user_data, raw_data, feature_coords = video_processor.get_data(show=show, user_video=user_video)
     raw_data = raw_data.T
+
+    csv_export = pd.DataFrame(feature_coords)
+    csv_export.to_csv(f'outputs/metrics/{engine}_data.csv', header=FEATURE_STRINGS[:len(raw_data)], index=False)
 
     # Median Absolute Deviation (MAD) and medians of features in reference data
     with open('assets/phase_statistics/phase_statistics.pkl', 'rb') as f:
@@ -269,15 +276,7 @@ def analyze(user_video, engine, show):
     left_on_ground = len(user_predictions[user_predictions == 3]) + len(user_predictions[user_predictions == 4])
 
     scored_data = np.zeros(raw_data.shape) # initialize empty array for storing scored user data
-
-    phase_strings = [
-        "rgc",
-        "rp",
-        "rf",
-        "lgc",
-        "lp",
-        "lf"
-    ]
+    
     last = user_predictions[0]
     length = 0 # phase length
 
@@ -291,17 +290,21 @@ def analyze(user_video, engine, show):
                 length += 1
                 i += 1
 
-            phase = phase_strings[last]
+            phase = running_phase_strings[last]
 
             start = i - length # start frame of the current phase being scored
 
             base = length // 3 # base size for each subphase
             remainder = length % 3 # extra frames of each phase are given to the "middle" phase
 
+            if base < 1:
+                last = current
+                continue
+
             # save MAD Z-score of subphases
             # "early" subphase
             scored_data[:, start:start + base] = (
-                    0.6745 * (raw_data[:, start:start + base] - phase_stats[engine][phase]["early"]["median"])
+                    0.6745 * (raw_data[:, start : start + base] - phase_stats[engine][phase]["early"]["median"])
                     / phase_stats[engine][phase]["early"]["mad"])
 
             # "middle" subphase
@@ -673,42 +676,42 @@ Seconds: {left_contact_lengths / 30}
                phase_lengths[rgc_phase_index][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_scores[rgc_phase_index][:, 1][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmin(phase_scores[rgc_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video(save_path + 'Right_Propulsion.mp4',
                phase_scores[rp_phase_index][:, 1][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_scores[rp_phase_index][:, 1][np.argmin(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmin(phase_scores[rp_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video(save_path + 'Right_Flight.mp4',
                phase_scores[rf_phase_index][:, 1][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_scores[rf_phase_index][:, 1][np.argmin(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmin(phase_scores[rf_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video(save_path + 'Left_Ground_Contact.mp4',
                phase_scores[lgc_phase_index][:, 1][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_scores[lgc_phase_index][:, 1][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmin(phase_scores[lgc_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video(save_path + 'Left_Propulsion.mp4',
                phase_scores[lp_phase_index][:, 1][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_scores[lp_phase_index][:, 1][np.argmin(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmin(phase_scores[lp_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
 
     save_video(save_path + 'Left_Flight.mp4',
                phase_scores[lf_phase_index][:, 1][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_scores[lf_phase_index][:, 1][np.argmin(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmin(phase_scores[lf_phase_index][:, 0])],
-               raw_data, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
 
     print('Saving Dashboard Video:')
 
@@ -725,22 +728,28 @@ Seconds: {left_contact_lengths / 30}
         'green': [(64, 255, 64), (96, 255, 96), (128, 255, 128), (160, 255, 160), (192, 255, 192)]
     }
 
+    window_size, border, step = Engine.get_formatting()
+
     overlay_cap = cv2.VideoCapture(f'outputs/videos/overlays/full_overlay.mp4')
     skeleton_cap = cv2.VideoCapture(f'outputs/videos/user_skeleton/user_skeleton.mp4')
     width = int(overlay_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(overlay_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    overlay_cap.set(cv2.CAP_PROP_POS_FRAMES, Engine.get_formatting()[1])
-    skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, Engine.get_formatting()[1])
+    fps = int(overlay_cap.get(cv2.CAP_PROP_FPS))
+    overlay_cap.set(cv2.CAP_PROP_POS_FRAMES, border)
+    skeleton_cap.set(cv2.CAP_PROP_POS_FRAMES, border)
+    vertical = height > width
 
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
-    demo = cv2.VideoWriter('outputs/videos/dashboard/dashboard.mp4', fourcc, 10, (int(width*.65), int(height*.65)))
-    canvas = np.zeros((height, width*2, 3), dtype=np.uint8)
+    demo_dims = (int(width * .65), int(height * .65)) if vertical else (int(width / 3), int(height))
+    demo = cv2.VideoWriter('outputs/videos/dashboard/dashboard.mp4', fourcc, 10, demo_dims)
 
-    plt.style.use('dark_background')  # Looks better in tech demos
+    canvas = np.zeros((height, width*2, 3) if vertical else (height, width, 3), dtype=np.uint8)
+
+    plt.style.use('dark_background')
     fig, ax = plt.subplots(figsize=(11, 5.5), dpi=100)
 
     graph = FigureCanvasAgg(fig)
-    x_data = np.arange(30)  # Showing a 30-frame window
+    x_data = np.arange(30)  # 30 frame window for graph
     line, = ax.plot(x_data, np.zeros(30), color='b', lw=3)
 
     frame_scores = np.sum(scored_data ** 2, axis=0)
@@ -756,11 +765,9 @@ Seconds: {left_contact_lengths / 30}
     ax.axhspan(y_green, y_yellow, facecolor=(1.0, 0.9, 0.6), zorder=0)  # Middle 1/3 (Warning)
     ax.axhspan(y_yellow, y_max, facecolor=(0.92, 0.6, 0.6), zorder=0)
 
-    fps = 30
-
     def phase_to_seconds(x, pos):
         if x in range(len(user_predictions)):
-            return f'{x / fps:.2f}s | {phase_strings[user_predictions[int(x)]].upper()}'
+            return f'{x / fps:.2f}s | {running_phase_strings[user_predictions[int(x)]].upper()}'
         else:
             return f'{x / fps:.2f}s'
 
@@ -794,15 +801,26 @@ Seconds: {left_contact_lengths / 30}
             zone = 'red'
             skeleton_frame = np.clip(skeleton_frame * [0.5, 0.5, 1], 0, 255).astype(np.uint8)
 
-        top_half = cv2.hconcat([overlay_frame, skeleton_frame])
+        error_index = np.argsort(np.abs(scored_data[:, frame]))[-5:][::-1]
+
+        # Draw Circle Around Largest Deviation
+        feature_offset = 16 if engine == 'yolo26' else 20
+        for i in range(5):
+            greatest_deviation_coords = (feature_coords[border + frame, 20 + COORDINATE_PAIRS[error_index[i]][0]],
+                                      feature_coords[border + frame, 20 + COORDINATE_PAIRS[error_index[i]][1]])
+            cv2.circle(skeleton_frame, greatest_deviation_coords, 30, feature_colors[zone][i], 3)
+
+        concatenate = cv2.hconcat if vertical else cv2.vconcat
+        top_half = concatenate([overlay_frame, skeleton_frame])
         full_screen = cv2.vconcat([top_half, canvas])
 
         cv2.putText(full_screen, 'Current Phase:',
-                    (int(width * 2 * .025), int(height * 2 * .5275)), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 255, 255), 2,
-                    cv2.LINE_AA)
+                    (int(width * 2 * .025), int(height * 2 * .5275) if vertical else int(height * 2.05)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 255, 255), 2, cv2.LINE_AA)
 
         cv2.putText(full_screen, PHASE_STRINGS[user_predictions[frame]],
-                    (int(width*2 * .025), int(height*2 * .5925)), cv2.FONT_HERSHEY_SIMPLEX, 6, (255,255,255), 15, cv2.LINE_AA)
+                    (int(width*2 * .025), int(height*2 * .5925) if vertical else int(height * 2.2)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 6, (255,255,255), 15, cv2.LINE_AA)
 
         start = max(0, frame-30)
         scores = list(np.sum(scored_data[:, start+1:frame+1] ** 2, axis=0))
@@ -828,48 +846,26 @@ Seconds: {left_contact_lengths / 30}
         graph_img = cv2.cvtColor(graph_img, cv2.COLOR_RGBA2BGR)
 
         graph_ratio = width / graph_img.shape[1]
-        graph_img = cv2.resize(graph_img, (int(width*1.5), int(graph_img.shape[0] * graph_ratio * 1.5)), interpolation=cv2.INTER_AREA)
+        graph_dims = (int(width * 1.5), int(graph_img.shape[0] * graph_ratio * 1.5)) if vertical else (int(width * 0.75), int(height * 0.75))
+        graph_img = cv2.resize(graph_img, graph_dims, interpolation=cv2.INTER_AREA)
 
         h, w = graph_img.shape[:2]
-        full_screen[int(height*1.25):int(height*1.25) + h, :w] = graph_img
-
-        error_index = np.argsort(np.abs(scored_data[:, frame]))[-5:][::-1]
+        start_point = int(height*1.25) if vertical else int(height*2.25)
+        full_screen[start_point:start_point + h, :w] = graph_img
 
         cv2.putText(full_screen,
                     'Greatest Feature Errors:',
-                    (int(width*2 * .71), int(height * 1.35)), cv2.FONT_HERSHEY_SIMPLEX, 1.75, (255,255,255), 2, cv2.LINE_AA)
+                    (int(width*2 * .71), int(height * 1.35)) if vertical else (int(width * .71), int(height * 2.35)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.75, (255,255,255), 2, cv2.LINE_AA)
 
-        sign = '(+)' if scored_data[error_index[0], frame] >= 0 else '(-)'
+        for i in range(5):
+            sign = '(+)' if scored_data[error_index[i], frame] >= 0 else '(-)'
+            cv2.putText(full_screen,
+                        f'{i+1}. {FEATURE_STRINGS[error_index[i]]} {sign}',
+                        (int(width*2 * .71), int(height * (1.425 + (0.05 * i)))) if vertical else (int(width * .71), int(height * (2.45 + (0.075 * i)))),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][i], 2, cv2.LINE_AA)
 
-        cv2.putText(full_screen,
-                    f'1. {FEATURE_STRINGS[error_index[0]]} {sign}',
-                    (int(width*2 * .71), int(height * 1.425)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][0], 2, cv2.LINE_AA)
-
-        sign = '(+)' if scored_data[error_index[1], frame] >= 0 else '(-)'
-
-        cv2.putText(full_screen,
-                    f'2. {FEATURE_STRINGS[error_index[1]]} {sign}',
-                    (int(width*2 * .71), int(height * 1.475)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][1], 2, cv2.LINE_AA)
-
-        sign = '(+)' if scored_data[error_index[2], frame] >= 0 else '(-)'
-
-        cv2.putText(full_screen,
-                    f'3. {FEATURE_STRINGS[error_index[2]]} {sign}',
-                    (int(width*2 * .71), int(height * 1.525)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][2], 2, cv2.LINE_AA)
-
-        sign = '(+)' if scored_data[error_index[3], frame] >= 0 else '(-)'
-
-        cv2.putText(full_screen,
-                    f'4. {FEATURE_STRINGS[error_index[3]]} {sign}',
-                    (int(width*2 * .71), int(height * 1.575)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][3], 2, cv2.LINE_AA)
-
-        sign = '(+)' if scored_data[error_index[4], frame] >= 0 else '(-)'
-
-        cv2.putText(full_screen,
-                    f'5. {FEATURE_STRINGS[error_index[4]]} {sign}',
-                    (int(width*2 * .71), int(height * 1.625)), cv2.FONT_HERSHEY_SIMPLEX, 1.25, feature_colors[zone][4], 2, cv2.LINE_AA)
-
-        full_screen = cv2.resize(full_screen, (int(width*.65), int(height*.65)), interpolation=cv2.INTER_AREA)
+        full_screen = cv2.resize(full_screen, demo_dims, interpolation=cv2.INTER_AREA)
         demo.write(full_screen)
 
     demo.release()
