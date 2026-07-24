@@ -1,5 +1,6 @@
-import numpy as np
+from phase_classes.phase_classes import *
 from tensorflow.keras.models import load_model
+import numpy as np
 
 def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
     """
@@ -41,6 +42,7 @@ def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
             count += 1
 
         last = current
+    print(new_phase.shape)
     return new_phase
 
 def find_MAD(phase):
@@ -93,40 +95,31 @@ def get_phase_statistics(reference_data, ref_raw_data, engines):
     """
     stats = {}
 
-    for data, raw, name in zip(reference_data, ref_raw_data, engines):
-        model = load_model(f'assets/models/{name}_phase_classifier.keras', compile=False)
+    for data, raw, engine in zip(reference_data, ref_raw_data, engines):
+        model = load_model(f'assets/phase_classifier_models/{engine}_phase_classifier.keras', compile=False)
         reference_predictions = np.argmax(model.predict(data), axis=1)
 
         # save raw data by phase while being grouped by feature
-        rgc = raw[reference_predictions == 0].T
-        rp = raw[reference_predictions == 1].T
-        rf = raw[reference_predictions == 2].T
-        lgc = raw[reference_predictions == 3].T
-        lp = raw[reference_predictions == 4].T
-        lf = raw[reference_predictions == 5].T
+        action = Action(
+                        engine,
+                        ['rgc', 'rp', 'rf', 'lgc', 'lp', 'lf'],
+                        [raw[reference_predictions == 0].T,
+                         raw[reference_predictions == 1].T,
+                         raw[reference_predictions == 2].T,
+                         raw[reference_predictions == 3].T,
+                         raw[reference_predictions == 4].T,
+                         raw[reference_predictions == 5].T]
+        )
+        print('engine:', engine)
+        print('raw:', raw.shape)
+        print('ref:', reference_predictions.shape)
 
-        new_rgc = interpolate_phase(rgc, 0, reference_predictions)
-        new_rp = interpolate_phase(rp, 1, reference_predictions)
-        new_rf = interpolate_phase(rf, 2, reference_predictions)
-        new_lgc = interpolate_phase(lgc, 3, reference_predictions)
-        new_lp = interpolate_phase(lp, 4, reference_predictions)
-        new_lf = interpolate_phase(lf, 5, reference_predictions)
+        for i in range(len(action.phases)):
+            action.phases[i] = interpolate_phase(action.phases[i], i, reference_predictions)
+            action.phase_stats[action.phase_names[i]] = find_MAD(action.phases[i])
+            if engine == 'yolo26':
+                print('     dict:', i, action.phase_stats[action.phase_names[i]]['early']['median'].shape)
 
-        rgc_stats = find_MAD(new_rgc)
-        rp_stats = find_MAD(new_rp)
-        rf_stats = find_MAD(new_rf)
-        lgc_stats = find_MAD(new_lgc)
-        lp_stats = find_MAD(new_lp)
-        lf_stats = find_MAD(new_lf)
-
-        engine_phase_stats = {
-            "rgc": rgc_stats,
-            "rp": rp_stats,
-            "rf": rf_stats,
-            "lgc": lgc_stats,
-            "lp": lp_stats,
-            "lf": lf_stats
-        }
-        stats[name] = engine_phase_stats
+        stats[engine] = action.phase_stats.copy()
 
     return stats
