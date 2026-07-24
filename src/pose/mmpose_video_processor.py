@@ -35,11 +35,12 @@ def get_data(show=False, user_video=None):
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(cap.get(cv2.CAP_PROP_FPS))
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         if user_video:
             user_skeleton, user_overlay = Engine.init_user_videos(width, height, fps)
+            feature_coords = np.zeros((frame_count, 50))  # 50 features
 
-        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         data = np.zeros((frame_count, 50))  # 50 features
         start = time.time()
 
@@ -126,11 +127,15 @@ def get_data(show=False, user_video=None):
 
             torso_length = (right_torso + left_torso) / 2
             for i, lm in enumerate(np.vstack((keypoints[0], keypoints[5:17], keypoints[18], keypoints[21]))):
-                x = (lm[0] - center_x) / torso_length
-                y = (lm[1] - center_y) / torso_length
+                x = lm[0] - center_x
+                y = lm[1] - center_y
 
-                data[curr_frame, 20 + i * 2] = x
-                data[curr_frame, 21 + i * 2] = y
+                data[curr_frame, 20 + i * 2] = x / torso_length
+                data[curr_frame, 21 + i * 2] = y / torso_length
+
+                if user_video:
+                    feature_coords[curr_frame, 20 + i * 2] = x + (width / 2)
+                    feature_coords[curr_frame, 21 + i * 2] = y + (height / 2)
 
             cv2.circle(frame, keypoints[9].astype(int), 5, tuple(map(int, connection_colors[10])), -1)
             cv2.circle(frame, keypoints[10].astype(int), 5, tuple(map(int, connection_colors[11])), -1)
@@ -207,6 +212,9 @@ def get_data(show=False, user_video=None):
 
         all_raw_data.append(data[border: -border - 1])
 
+        if user_video:
+            feature_coords[:, :20] = data[:, :20]
+
         inputs = []
         for i in range(0, len(data) - window_size, step):
             window = data[i:i + window_size]
@@ -220,5 +228,8 @@ def get_data(show=False, user_video=None):
 
     all_data = np.concatenate(all_data, axis=0)
     all_raw_data = np.concatenate(all_raw_data, axis=0)
+
+    if user_video:
+        return all_data, all_raw_data, np.array(feature_coords).astype(int)
 
     return all_data, all_raw_data
