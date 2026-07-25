@@ -6,7 +6,7 @@ np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=125)
 
 def capture_pose(model: YOLO, frame: np.ndarray):
     yolo_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    results = model.track(frame, persist=True, verbose=False, show=False, show_boxes=False, save=False)[0]
+    results = model.predict(frame, verbose=False, show=False, show_boxes=False, save=False)[0]
     time = results.speed['inference']
 
     if len(results.keypoints.conf):
@@ -31,12 +31,12 @@ connections = [
     (12, 14), (14, 16)  # Right Leg (Hip-Knee-Ankle)
 ]
 
-yolo_n = YOLO("assets/yolo26_models/yolo26n-pose.pt", task='pose')
-yolo_x = YOLO("assets/yolo26_models/yolo26x-pose.pt", task='pose')
-yolo_n.fuse()
+yolo_s = YOLO("../assets/yolo26_models/yolo26s-pose.pt", task='pose')
+yolo_x = YOLO("../assets/yolo26_models/yolo26x-pose.pt", task='pose')
+yolo_s.fuse()
 yolo_x.fuse()
 
-video_str = "assets/filtered_videos/short-boetest.mp4"
+video_str = "../assets/filtered_videos/short-boetest.mp4"
 cap = cv2.VideoCapture(video_str)
 
 frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -45,19 +45,25 @@ width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-out = cv2.VideoWriter('outputs/yolotesting.mp4', fourcc, fps, (width, height))
+out = cv2.VideoWriter('../outputs/yolotesting.mp4', fourcc, fps, (width, height))
 
 MIN_CONFIDENCE = 0.5
+
+s_count = 0
+x_count = 0
 
 for curr_frame in range(frame_count):
     ret, frame = cap.read()
 
-    keypoints, confidences, time = capture_pose(model=yolo_n, frame=frame)
-    model = 'yolo_n'
+    keypoints, confidences, time = capture_pose(model=yolo_s, frame=frame)
+    model = 'yolo_s'
 
     if np.min(confidences) < MIN_CONFIDENCE:
         keypoints, confidences, time = capture_pose(model=yolo_x, frame=frame)
         model = 'yolo_x'
+        x_count += 1
+    else:
+        s_count += 1
 
     for pt1, pt2 in connections:
         cv2.line(frame, keypoints[pt1].astype(int), keypoints[pt2].astype(int), (255,255,255), 8)
@@ -67,6 +73,10 @@ for curr_frame in range(frame_count):
 
     out.write(frame)
     print(model, confidences, time)
+
+print()
+print(f"yolo_s: {s_count}")
+print(f"yolo_x: {x_count}")
 
 out.release()
 cap.release()
