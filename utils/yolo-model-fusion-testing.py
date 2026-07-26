@@ -1,18 +1,19 @@
 from ultralytics import YOLO
 import cv2
 import numpy as np
+import time
 
 np.set_printoptions(threshold=np.inf, suppress=True, precision=3, linewidth=125)
 
 def capture_pose(model: YOLO, frame: np.ndarray):
     yolo_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    results = model.predict(frame, verbose=False, show=False, show_boxes=False, save=False)[0]
-    time = results.speed['inference']
+    results = model.track(frame, persist=True, verbose=False, show=False, show_boxes=False, save=False)[0]
+    speed = results.speed['inference']
 
     if len(results.keypoints.conf):
         keypoints = results.keypoints.xy[0].numpy()
         confidences = results.keypoints.conf[0].numpy()[yolo_landmarks]
-        return keypoints, confidences, time
+        return keypoints, confidences, speed
 
     return None
 
@@ -31,12 +32,12 @@ connections = [
     (12, 14), (14, 16)  # Right Leg (Hip-Knee-Ankle)
 ]
 
-yolo_s = YOLO("../assets/yolo26_models/yolo26s-pose.pt", task='pose')
+yolo_n = YOLO("../assets/yolo26_models/yolo26n-pose.pt", task='pose')
 yolo_x = YOLO("../assets/yolo26_models/yolo26x-pose.pt", task='pose')
-yolo_s.fuse()
 yolo_x.fuse()
+yolo_n.fuse()
 
-video_str = "../assets/filtered_videos/short-boetest.mp4"
+video_str = "../assets/filtered_videos/SHU-vsr-bounce-6.6mph.mp4"
 cap = cv2.VideoCapture(video_str)
 
 frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -47,19 +48,19 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 out = cv2.VideoWriter('../outputs/yolotesting.mp4', fourcc, fps, (width, height))
 
-MIN_CONFIDENCE = 0.5
+MIN_CONFIDENCE = 0.85
 
 s_count = 0
 x_count = 0
+start = time.time()
 
 for curr_frame in range(frame_count):
     ret, frame = cap.read()
-
-    keypoints, confidences, time = capture_pose(model=yolo_s, frame=frame)
+    keypoints, confidences, speed = capture_pose(model=yolo_n, frame=frame)
     model = 'yolo_s'
 
     if np.min(confidences) < MIN_CONFIDENCE:
-        keypoints, confidences, time = capture_pose(model=yolo_x, frame=frame)
+        keypoints, confidences, speed = capture_pose(model=yolo_x, frame=frame)
         model = 'yolo_x'
         x_count += 1
     else:
@@ -72,9 +73,10 @@ for curr_frame in range(frame_count):
                 cv2.FONT_HERSHEY_SIMPLEX, 3, (0,0,0), 6, cv2.LINE_AA)
 
     out.write(frame)
-    print(model, confidences, time)
+    print(model, confidences, speed)
 
 print()
+print(f'time: {time.time() - start}')
 print(f"yolo_s: {s_count}")
 print(f"yolo_x: {x_count}")
 
