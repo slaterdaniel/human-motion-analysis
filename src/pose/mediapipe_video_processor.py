@@ -13,8 +13,8 @@ def get_data(show=False, user_video=None):
         smooth_landmarks=True,
         enable_segmentation=False,
         smooth_segmentation=False,
-        min_detection_confidence=0.8,
-        min_tracking_confidence=0.8
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.99
     )
 
     valid_landmarks = [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 31, 32]
