@@ -6,6 +6,8 @@ import os
 
 def get_data(show=False, user_video=None):
     yolo = YOLO("assets/yolo26_models/yolo26x-pose.pt")
+    yolo.fuse()
+
     valid_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
     all_data = []
@@ -15,12 +17,15 @@ def get_data(show=False, user_video=None):
 
     for video in videos:
         Engine.apply_filters(video)
-        cap = cv2.VideoCapture(f'assets/filtered_videos/{os.path.splitext(os.path.basename(video))[0]}.mp4')
+        video_basename = os.path.splitext(os.path.basename(video))[0]
+        filtered_path = f'assets/filtered_videos/{video_basename}.mp4'
+        cap = cv2.VideoCapture(filtered_path)
 
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
 
         if user_video:
             user_skeleton, user_overlay = Engine.init_user_videos(width, height, fps)
@@ -37,15 +42,16 @@ def get_data(show=False, user_video=None):
             # Torso
             (5, 11), (6, 12),  # Shoulder to Hip (Left and Right)
             (11, 12),  # Hip to Hip
-            # Legs (The core of your gait analysis)
+            # Legs
             (11, 13), (13, 15),  # Left Leg (Hip-Knee-Ankle)
             (12, 14), (14, 16)  # Right Leg (Hip-Knee-Ankle)
         ]
 
         data = np.zeros((frame_count, 46))  # 46 features
 
-        results = yolo.predict(
-            source=video,
+        results = yolo.track(
+            source=filtered_path,
+            persist=True,
             save=True if user_video else False,
             project="/Users/danielslater/Documents/human-motion-analysis/outputs/videos",
             name="overlays",
@@ -54,7 +60,7 @@ def get_data(show=False, user_video=None):
             show_boxes=False)
 
         if user_video:
-            os.rename(f"outputs/videos/overlays/{os.path.splitext(os.path.basename(video))[0]}.mp4",
+            os.rename(f"outputs/videos/overlays/{video_basename}.mp4",
                       "outputs/videos/overlays/full_overlay.mp4")
 
         for curr_frame, result in enumerate(results):
@@ -107,6 +113,12 @@ def get_data(show=False, user_video=None):
             b = current_pose[13]
             c = current_pose[15]
             data[curr_frame, 7] = Engine.find_angle(a, b, c)
+            #
+            # # right tibial angle
+            # a = current_pose[14]
+            # b = current_pose[16]
+            # c = current_pose[16] + (0, 100)
+            # data[curr_frame, ] = Engine.find_angle(a, b, c)
 
             # center coordinates around waist to normalize data across user_input
             center_x = (current_pose[11, 0] + current_pose[12, 0]) / 2
@@ -157,7 +169,6 @@ def get_data(show=False, user_video=None):
 
             print(f"Frame: {curr_frame + 1}/{frame_count} Saved")
 
-        cap.release()
         if user_video:
             user_skeleton.release()
 
