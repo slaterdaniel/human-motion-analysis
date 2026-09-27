@@ -9,7 +9,7 @@ def get_formatting():
     step = 1
     return window_size, border, step
 
-def find_angle(a, b, c):
+def find_angle(a, b, c, unit='d'):
     """
     find angle ∠ABC
     returned as float
@@ -22,6 +22,9 @@ def find_angle(a, b, c):
     bc = c - b
 
     angle_radians = np.arccos(np.clip(np.dot(ac, bc) / (np.linalg.norm(ac) * np.linalg.norm(bc)), -1.0, 1.0))
+    if unit == 'r':
+        return angle_radians
+
     angle_degrees = np.degrees(angle_radians)
 
     return angle_degrees
@@ -48,7 +51,7 @@ def apply_filters(video):
         ffmpeg
         .input(video)
         # 3. Boost contrast to help the AI see limbs against the treadmill
-        .filter('eq', contrast=1.3, brightness=0.02)
+        # .filter('eq', contrast=1.5, brightness=0.02)
         .output(f'assets/filtered_videos/{video_name}.mp4', pix_fmt='yuv420p', crf=18)
         .run(overwrite_output=True)
     )
