@@ -2,6 +2,7 @@ import cv2
 from ultralytics import YOLO
 import numpy as np
 import src.pose.Engine as Engine
+from src.pose.features import *
 import os
 
 def get_data(show=False, user_video=None):
@@ -9,6 +10,21 @@ def get_data(show=False, user_video=None):
     yolo.fuse()
 
     valid_landmarks = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    NOSE_KP       = 0
+    L_SHOULDER_KP = 5
+    R_SHOULDER_KP = 6
+    L_ELBOW_KP    = 7
+    R_ELBOW_KP    = 8
+    L_WRIST_KP    = 9
+    R_WRIST_KP    = 10
+    L_HIP_KP      = 11
+    R_HIP_KP      = 12
+    L_KNEE_KP     = 13
+    R_KNEE_KP     = 14
+    L_ANKLE_KP    = 15
+    R_ANKLE_KP    = 16
+    L_FOOT_KP     = None
+    R_FOOT_KP     = None
 
     all_data = []
     all_raw_data = []
@@ -30,7 +46,7 @@ def get_data(show=False, user_video=None):
         if user_video:
             user_skeleton, user_overlay = Engine.init_user_videos(width, height, fps)
             user_overlay.release()
-            feature_coords = np.zeros((frame_count, 46))  # 50 features
+            feature_coords = np.zeros((frame_count, 62))  # 50 features
 
         connections = [
             # Face
@@ -47,7 +63,7 @@ def get_data(show=False, user_video=None):
             (12, 14), (14, 16)  # Right Leg (Hip-Knee-Ankle)
         ]
 
-        data = np.zeros((frame_count, 46))  # 46 features
+        data = np.zeros((frame_count, 62))  # 46 features
 
         results = yolo.track(
             source=filtered_path,
@@ -67,66 +83,97 @@ def get_data(show=False, user_video=None):
             current_pose = result.keypoints.xy[0].clone()
 
             # right shoulder angle
-            a = current_pose[8]
-            b = current_pose[6]
-            c = current_pose[12]
-            data[curr_frame, 0] = Engine.find_angle(a, b, c)
+            a = current_pose[R_ELBOW_KP]
+            b = current_pose[R_SHOULDER_KP]
+            c = current_pose[R_HIP_KP]
+            data[curr_frame, R_SHOULDER_ANGLE] = Engine.find_angle(a, b, c)
 
             # left shoulder angle
-            a = current_pose[7]
-            b = current_pose[5]
-            c = current_pose[11]
-            data[curr_frame, 1] = Engine.find_angle(a, b, c)
+            a = current_pose[L_ELBOW_KP]
+            b = current_pose[L_SHOULDER_KP]
+            c = current_pose[L_HIP_KP]
+            data[curr_frame, L_SHOULDER_ANGLE] = Engine.find_angle(a, b, c)
 
             # right elbow angle
-            a = current_pose[6]
-            b = current_pose[8]
-            c = current_pose[10]
-            data[curr_frame, 2] = Engine.find_angle(a, b, c)
+            a = current_pose[R_SHOULDER_KP]
+            b = current_pose[R_ELBOW_KP]
+            c = current_pose[R_WRIST_KP]
+            data[curr_frame, R_ELBOW_ANGLE] = Engine.find_angle(a, b, c)
 
             # left elbow angle
-            a = current_pose[5]
-            b = current_pose[7]
-            c = current_pose[9]
-            data[curr_frame, 3] = Engine.find_angle(a, b, c)
+            a = current_pose[L_SHOULDER_KP]
+            b = current_pose[L_ELBOW_KP]
+            c = current_pose[L_WRIST_KP]
+            data[curr_frame, L_ELBOW_ANGLE] = Engine.find_angle(a, b, c)
 
             # right hip angle
-            a = current_pose[6]
-            b = current_pose[12]
-            c = current_pose[14]
-            data[curr_frame, 4] = Engine.find_angle(a, b, c)
+            a = current_pose[R_SHOULDER_KP]
+            b = current_pose[R_HIP_KP]
+            c = current_pose[R_KNEE_KP]
+            data[curr_frame, R_HIP_ANGLE] = Engine.find_angle(a, b, c)
 
             # left hip angle
-            a = current_pose[5]
-            b = current_pose[11]
-            c = current_pose[13]
-            data[curr_frame, 5] = Engine.find_angle(a, b, c)
+            a = current_pose[L_SHOULDER_KP]
+            b = current_pose[L_HIP_KP]
+            c = current_pose[L_KNEE_KP]
+            data[curr_frame, L_HIP_ANGLE] = Engine.find_angle(a, b, c)
 
             # right knee angle
-            a = current_pose[12]
-            b = current_pose[14]
-            c = current_pose[16]
-            data[curr_frame, 6] = Engine.find_angle(a, b, c)
+            a = current_pose[R_HIP_KP]
+            b = current_pose[R_KNEE_KP]
+            c = current_pose[R_ANKLE_KP]
+            data[curr_frame, R_KNEE_ANGLE] = Engine.find_angle(a, b, c)
 
             # left knee angle
-            a = current_pose[11]
-            b = current_pose[13]
-            c = current_pose[15]
-            data[curr_frame, 7] = Engine.find_angle(a, b, c)
-            #
-            # # right tibial angle
-            # a = current_pose[14]
-            # b = current_pose[16]
-            # c = current_pose[16] + (0, 100)
-            # data[curr_frame, ] = Engine.find_angle(a, b, c)
+            a = current_pose[L_HIP_KP]
+            b = current_pose[L_KNEE_KP]
+            c = current_pose[L_ANKLE_KP]
+            data[curr_frame, L_KNEE_ANGLE] = Engine.find_angle(a, b, c)
+
+            # right tibial angle
+            a = current_pose[R_KNEE_KP]
+            b = current_pose[R_ANKLE_KP]
+            c = (current_pose[R_ANKLE_KP, 0], current_pose[R_ANKLE_KP, 1] - 100)
+            data[curr_frame, R_TIBIAL_ANGLE] = Engine.find_angle(a, b, c)
+
+            # left tibial angle
+            a = current_pose[L_KNEE_KP]
+            b = current_pose[L_ANKLE_KP]
+            c = (current_pose[L_ANKLE_KP, 0], current_pose[L_ANKLE_KP, 1] - 100)
+            data[curr_frame, L_TIBIAL_ANGLE] = Engine.find_angle(a, b, c)
+
+            if R_FOOT_KP:
+                # right foot inclination angle
+                a = (current_pose[R_ANKLE_KP, 0] + 100, current_pose[R_ANKLE_KP, 1])
+                b = current_pose[R_ANKLE_KP]
+                c = current_pose[R_FOOT_KP]
+                data[curr_frame, R_FOOT_INCLINATION_ANGLE] = Engine.find_angle(a, b, c)
+
+                # left foot inclination angle
+                a = (current_pose[L_ANKLE_KP, 0] + 100, current_pose[L_ANKLE_KP, 1])
+                b = current_pose[L_ANKLE_KP]
+                c = current_pose[L_FOOT_KP]
+                data[curr_frame, L_FOOT_INCLINATION_ANGLE] = Engine.find_angle(a, b, c)
+
+            # right tibial angle
+            a = (current_pose[R_HIP_KP, 0] + 100, current_pose[R_HIP_KP, 1])
+            b = current_pose[R_HIP_KP]
+            c = current_pose[R_SHOULDER_KP]
+            data[curr_frame, R_FORWARD_LEAN] = Engine.find_angle(a, b, c)
+
+            # left forward lean angle
+            a = (current_pose[L_HIP_KP, 0] + 100, current_pose[L_HIP_KP, 1])
+            b = current_pose[L_HIP_KP]
+            c = current_pose[L_SHOULDER_KP]
+            data[curr_frame, L_FORWARD_LEAN] = Engine.find_angle(a, b, c)
 
             # center coordinates around waist to normalize data across user_input
-            center_x = (current_pose[11, 0] + current_pose[12, 0]) / 2
-            center_y = (current_pose[11, 1] + current_pose[12, 1]) / 2
+            center_x = (current_pose[L_HIP_KP, 0] + current_pose[R_HIP_KP, 0]) / 2
+            center_y = (current_pose[L_HIP_KP, 1] + current_pose[R_HIP_KP, 1]) / 2
 
             # scale by torso length so different size people can be compared
-            right_torso = float(np.linalg.norm(current_pose[6] - current_pose[12]))
-            left_torso = float(np.linalg.norm(current_pose[5] - current_pose[11]))
+            right_torso = float(np.linalg.norm(current_pose[R_SHOULDER_KP] - current_pose[R_HIP_KP]))
+            left_torso = float(np.linalg.norm(current_pose[L_SHOULDER_KP] - current_pose[L_HIP_KP]))
             torso_length = (right_torso + left_torso) / 2
             count = 0
 
@@ -135,12 +182,12 @@ def get_data(show=False, user_video=None):
                     x = lm[0] - center_x
                     y = lm[1] - center_y
 
-                    data[curr_frame, 20 + count * 2] = x / torso_length
-                    data[curr_frame, 21 + count * 2] = y / torso_length
+                    data[curr_frame, NOSE_X + count * 2] = x / torso_length
+                    data[curr_frame, NOSE_Y + count * 2] = y / torso_length
 
                     if user_video:
-                        feature_coords[curr_frame, 20 + count * 2] = x + (width / 2)
-                        feature_coords[curr_frame, 21 + count * 2] = y + (height / 2)
+                        feature_coords[curr_frame, NOSE_X + count * 2] = x + (width / 2)
+                        feature_coords[curr_frame, NOSE_Y + count * 2] = y + (height / 2)
 
                     count += 1
 
@@ -173,20 +220,20 @@ def get_data(show=False, user_video=None):
             user_skeleton.release()
 
         # smooth angle data to reduce noise
-        smooth_window = 3
-        half_window = smooth_window // 2
-        for i in range(half_window, len(data) - half_window):
-            data[i, :8] = np.mean(data[i - half_window:i + half_window + 1, :8], axis=0)
+        # smooth_window = 3
+        # half_window = smooth_window // 2
+        # for i in range(half_window, len(data) - half_window):
+        #     data[i, :R_SHOULDER_ANGLE_VEL] = np.mean(data[i - half_window:i + half_window + 1, :R_SHOULDER_ANGLE_VEL], axis=0)
 
         # find angular velocities from smoothed angles
         for i in range(1, len(data)):
-            data[i, 10:18] = data[i, :8] - data[i - 1, :8]
+            data[i, R_SHOULDER_ANGLE_VEL:NOSE_X] = data[i, :R_SHOULDER_ANGLE_VEL] - data[i - 1, :R_SHOULDER_ANGLE_VEL]
 
         window_size, border, step = Engine.get_formatting()
         all_raw_data.append(data[border: -border - 1])
 
         if user_video:
-            feature_coords[:, :18] = data[:, :18]
+            feature_coords[:, :NOSE_X] = data[:, :NOSE_X]
 
         inputs = []
         for i in range(0, len(data) - window_size, step):
