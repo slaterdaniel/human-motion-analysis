@@ -3,9 +3,8 @@ import numpy as np
 import os
 from src.pose import Engine
 
-
 def main():
-    video = 'data/user_input/boetest.mov'
+    video = 'data/user_input/SHU-vf-normal-6.6mph.MOV'
     cap = cv2.VideoCapture(video)
     frame_num = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     border = Engine.get_formatting()[1]
@@ -19,12 +18,12 @@ def main():
     curr_frame = border
     cap.set(cv2.CAP_PROP_POS_FRAMES, curr_frame)
 
-    PHASE_STRINGS = ['Right Ground Contact',
+    PHASE_STRINGS = ('Right Ground Contact',
                      'Right Propulsion',
                      'Right Flight',
                      'Left Ground Contact',
                      'Left Propulsion',
-                     'Left Flight']
+                     'Left Flight')
 
     while True:
         ret, frame = cap.read()
@@ -84,7 +83,7 @@ def main():
             cap.set(cv2.CAP_PROP_POS_FRAMES, curr_frame)
 
     cv2.destroyAllWindows()
-    np.save(f'assets/video_training_labels/{os.path.splitext(os.path.basename(video))[0]}.npy', phase_labels)
+    np.save(f'assets/training_video_labels/{os.path.splitext(os.path.basename(video))[0]}.npy', phase_labels)
     print(f'\nFinal Labels:\n{np.array(phase_labels)}')
     print(f'Length = {len(phase_labels)}/{frame_num - 1 - border * 2}')
 
