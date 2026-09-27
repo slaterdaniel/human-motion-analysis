@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 import os
 from src.pose import Engine
 from src.pose.features import *
+from src.phase_classes.phase_classes import summary_data
 
 # KEY:
 # rgc = right ground contact
@@ -82,12 +83,12 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
 
     vertical = height > width
 
-    PHASE_STRINGS = ['Right Ground Contact',
+    PHASE_STRINGS = ('Right Ground Contact',
                      'Right Propulsion',
                      'Right Flight',
                      'Left Ground Contact',
                      'Left Propulsion',
-                     'Left Flight']
+                     'Left Flight')
 
     border = window_size // 2
     length = np.maximum(worst_length, best_length)
@@ -221,9 +222,10 @@ def analyze(user_video, engine, show):
 
     elif engine == 'yolo26':
         from src.pose import yolo26_video_processor as video_processor
-        phase_classifier = 'assets/phase_classifier_models/yolo26_phase_classifier.keras'
+        # phase_classifier = 'assets/phase_classifier_models/yolo26_phase_classifier.keras'
+        phase_classifier = 'assets/phase_classifier_models/mmpose_front_angle_phase_classifier.keras'
 
-    else:
+    elif engine == 'mmpose':
         from src.pose import mmpose_video_processor as video_processor
         phase_classifier = 'assets/phase_classifier_models/mmpose_phase_classifier.keras'
 
@@ -250,12 +252,32 @@ def analyze(user_video, engine, show):
     lgc_starts = []
     right_contact_lengths = []
     left_contact_lengths = []
-    for i in range(1, len(user_predictions)):
-        if user_predictions[i] == 0 and  user_predictions[i-1] != 0:
-            rgc_starts.append(i)
-        elif user_predictions[i] == 3 and  user_predictions[i-1] != 3:
-            lgc_starts.append(i)
+    right_midstances = []
+    left_midstances = []
+    right_terminal = []
+    left_terminal = []
+    for i in range(1, len(user_predictions)-1):
+        # right side key phase frame checks
+        if user_predictions[i] == 0:
+            if user_predictions[i-1] != 0: # initial contact
+                rgc_starts.append(i)
+            elif user_predictions[i+1] == 1: # midstance
+                right_midstances.append(i)
 
+        elif user_predictions[i] == 1 and user_predictions[i+1] == 2: # terminal stance
+            right_terminal.append(i)
+
+        # left side key phase frame checks
+        elif user_predictions[i] == 3:
+            if user_predictions[i-1] != 3: # initial contact
+                lgc_starts.append(i)
+            elif user_predictions[i+1] == 4: # midstance
+                left_midstances.append(i)
+
+        elif user_predictions[i] == 4 and user_predictions[i+1] == 5: # terminal stance
+            left_terminal.append(i)
+
+        # contact lengths
         elif user_predictions[i] == 2 and user_predictions[i-1] == 1 and len(rgc_starts):
             right_contact_lengths.append(i - rgc_starts[-1])
         elif user_predictions[i] == 5 and user_predictions[i-1] == 4 and len(lgc_starts):
@@ -264,12 +286,12 @@ def analyze(user_video, engine, show):
     # Number of frames right/left foot is on ground each rep
     right_contact_lengths = np.array(right_contact_lengths)
     left_contact_lengths = np.array(left_contact_lengths)
+    rgc_starts = np.array(rgc_starts) - 1
+    lgc_starts = np.array(lgc_starts) - 1
 
     # X values of right/left foot on initial ground contact
-    rfoot = 40 if engine == 'yolo26' else 48
-    lfoot = 38 if engine == 'yolo26' else 46
-    right_contacts = raw_data[rfoot, rgc_starts]
-    left_contacts = raw_data[lfoot, lgc_starts]
+    right_contacts = raw_data[R_ANKLE_X, rgc_starts]
+    left_contacts = raw_data[L_ANKLE_X, lgc_starts]
 
     # Number of frames with right/left foot grounded
     right_on_ground = len(user_predictions[user_predictions == 0]) + len(user_predictions[user_predictions == 1])
@@ -386,7 +408,7 @@ def analyze(user_video, engine, show):
     plt.xlabel('Rep #')
     plt.ylabel('Phase Z-Score')
     plt.legend()
-    plt.savefig('outputs/graphs/phase_breakdown/Phase_Z-Scores.png', dpi=300)
+    # plt.savefig('outputs/graphs/phase_breakdown/Phase_Z-Scores.png', dpi=300)
 
     # Create array of the indexes of each rep as they appear in the user's video
     rep_index = []
@@ -555,6 +577,38 @@ def analyze(user_video, engine, show):
         )
     print(f"{'Left_Flight.txt':<25} Successfully Saved\n")
 
+    gct = (right_on_ground + left_on_ground) / rep_index[-1]
+    right_gct = right_on_ground / (rep_index[-1] // 2)
+    left_gct = left_on_ground / (rep_index[-1] // 2)
+    avr_right_contacts = np.mean(right_contacts)
+    avr_left_contacts = np.mean(left_contacts)
+    r_knee_flexion_ic = 180 - np.mean(raw_data[R_KNEE_ANGLE, rgc_starts])
+    l_knee_flexion_ic = 180 - np.mean(raw_data[L_KNEE_ANGLE, lgc_starts])
+    if raw_data[R_FOOT_INCLINATION_ANGLE, 0]:
+        r_foot_inclination_ic = np.mean(raw_data[R_FOOT_INCLINATION_ANGLE, rgc_starts])
+        l_foot_inclination_ic = np.mean(raw_data[L_FOOT_INCLINATION_ANGLE, lgc_starts])
+    r_tibial_contact_angle = np.mean(raw_data[R_TIBIAL_ANGLE, rgc_starts])
+    l_tibial_contact_angle = np.mean(raw_data[L_TIBIAL_ANGLE, lgc_starts])
+
+    # ---------------------------------------------------------
+    # Mid-stances
+
+    r_midstance_dorsiflexion = np.mean(raw_data[R_ANKLE_ANGLE, right_midstances])
+    l_midstance_dorsiflexion = np.mean(raw_data[L_ANKLE_ANGLE, left_midstances])
+    forward_lean = 90 - np.mean(np.concatenate((raw_data[R_FORWARD_LEAN, right_midstances],
+                                               raw_data[L_FORWARD_LEAN, left_midstances])))
+
+    # ---------------------------------------------------------
+    # Terminal
+
+    r_terminal_hip_extension = 180 - np.mean(raw_data[R_HIP_ANGLE, right_terminal])
+    l_terminal_hip_extension = 180 - np.mean(raw_data[L_HIP_ANGLE, left_terminal])
+
+    # ---------------------------------------------------------
+    # Swing phase
+
+
+
     # Save Ground Contact Timing
     print("Saving Ground Contact Timing Data\n")
     with open('outputs/metrics/Ground_Contact_Timing.txt', 'w') as f:
@@ -571,13 +625,13 @@ def analyze(user_video, engine, show):
     ---------------------
 
 Average Right Ground Strike Point:
-{np.mean(right_contacts):.3f}
+{avr_right_contacts:.3f}
 
 Average Left Ground Strike Point:
-{np.mean(left_contacts):.3f}
+{avr_left_contacts:.3f}
 
 Average Strike Point Imbalance: (negative = left | positive = right)
-{np.mean(right_contacts) - np.mean(left_contacts):.3f}
+{avr_right_contacts - avr_left_contacts:.3f}
 
 
 Right Ground Striking Points:
@@ -591,13 +645,13 @@ Left Ground Striking Points:
     --------------------
 
 Average Ground Contact Time:
-Frames: {(right_on_ground + left_on_ground) / rep_index[-1]:.0f}
-Seconds: {(right_on_ground + left_on_ground) / (rep_index[-1] * 30):.3f}
+Frames: {gct:.0f}
+Seconds: {gct / 30:.3f}
 
 
 Average Right Ground Contact Time:
-Frames: {right_on_ground / (rep_index[-1] // 2):.0f}
-Seconds: {right_on_ground / ((rep_index[-1] * 30) // 2):.3f}
+Frames: {right_gct:.0f}
+Seconds: {right_gct / 30:.3f}
 
 Right Ground Contact Time:
 Frames: {right_contact_lengths}
@@ -605,14 +659,45 @@ Seconds: {right_contact_lengths / 30}
 
 
 Average Left Ground Contact Time:
-Frames: {left_on_ground / (rep_index[-1] // 2):.0f}
-Seconds: {left_on_ground / ((rep_index[-1] * 30) // 2):.3f}
+Frames: {left_gct:.0f}
+Seconds: {left_gct / 30:.3f}
 
 Left Ground Contact Time:
 Frames: {left_contact_lengths}
 Seconds: {left_contact_lengths / 30}
 """)
     print(f"{'Ground_Contact_Timing.txt':<25} Successfully Saved\n")
+
+    # [0] = Right
+    # [1] = All
+    # [2] = Left
+    # [3] = Optimal
+    new_summary_data = summary_data.copy()
+    new_summary_data['Cadence'] = [None, round(steps_per_minute), None, ">170"]
+    new_summary_data['GCT'] = [right_gct / 30, gct / 30, left_gct / 30, None]
+    if raw_data[R_FOOT_X, 0]:
+        new_summary_data['Foot Inclination Angle at IC'] = \
+            [r_foot_inclination_ic, np.mean((r_foot_inclination_ic, l_foot_inclination_ic)), l_foot_inclination_ic, "<15"]
+    new_summary_data['Tibial Inclination Angle at IC'] = \
+        [r_tibial_contact_angle, np.mean((r_tibial_contact_angle, l_tibial_contact_angle)), l_tibial_contact_angle, "<5"]
+    new_summary_data['Distance Heelstrike to COM at IC'] = \
+        [avr_right_contacts, np.mean((avr_right_contacts, avr_left_contacts)), avr_left_contacts, "<30cm"]
+    new_summary_data['Knee Flexion Angle at IC'] = \
+        [r_knee_flexion_ic, np.mean((r_knee_flexion_ic, l_knee_flexion_ic)), l_knee_flexion_ic, None]
+
+    # Ankle Angle and midstance
+    new_summary_data['Ankle Dorsiflex at Midstance'] = \
+        [r_midstance_dorsiflexion, np.mean((r_midstance_dorsiflexion, l_midstance_dorsiflexion)), l_midstance_dorsiflexion, None]
+
+    new_summary_data['Forward lean angle'] = \
+        [None, forward_lean, None, ">10deg"]
+
+    new_summary_data['Hip extension'] = \
+        [r_terminal_hip_extension, np.mean((r_terminal_hip_extension, l_terminal_hip_extension)), l_terminal_hip_extension, None]
+
+    frame = pd.DataFrame(new_summary_data)
+    frame = frame.T
+    frame.to_csv('outputs/metrics/summary.csv', header=False)
 
     # Save Graphs of each features scores over time
     print("Saving Z-score Graphs\n")
@@ -641,7 +726,7 @@ Seconds: {left_contact_lengths / 30}
             plt.plot(ema, color='r', label="EMA Trend")
 
             plt.legend()
-            plt.savefig(f"outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
+            # plt.savefig(f"outputs/graphs/Z-Scores/{FEATURE_STRINGS[i]}.png", dpi=300)
             plt.close()
 
     print("Saving Stride Frequency Data:")
@@ -651,20 +736,20 @@ Seconds: {left_contact_lengths / 30}
     plt.ylim(0, None)
     plt.xlabel("Frames")
     plt.ylabel("Strides/Second")
-    plt.savefig("outputs/graphs/Stride_Frequency/Stride_Frequency.png", dpi=300)
+    # plt.savefig("outputs/graphs/Stride_Frequency/Stride_Frequency.png", dpi=300)
     print(f"{'Stride Frequency Data':<25} Successfully Saved\n")
 
     print('Saving Phase Breakdown Data:')
-    phase_score_fig = go.Figure()
-    phase_score_fig.add_trace(go.Scatterpolar(
-        r=[rgc_breakdown, rp_breakdown, rf_breakdown, lgc_breakdown, lp_breakdown, lf_breakdown, rgc_breakdown],
-        theta=['Right Ground Contact', 'Right Propulsion', 'Right Flight',
-              'Left Ground Contact', 'Left Propulsion', 'Left Flight', 'Right Ground Contact'],
-        fill='toself',
-        name='Phase Breakdown',
-        line_color='red'
-    ))
-    phase_score_fig.write_html('outputs/graphs/phase_breakdown/phase_breakdown_comparison.html', auto_open=False) # <-- USE HTML FOR FINAL PRODUCT
+    # phase_score_fig = go.Figure()
+    # phase_score_fig.add_trace(go.Scatterpolar(
+    #     r=[rgc_breakdown, rp_breakdown, rf_breakdown, lgc_breakdown, lp_breakdown, lf_breakdown, rgc_breakdown],
+    #     theta=['Right Ground Contact', 'Right Propulsion', 'Right Flight',
+    #           'Left Ground Contact', 'Left Propulsion', 'Left Flight', 'Right Ground Contact'],
+    #     fill='toself',
+    #     name='Phase Breakdown',
+    #     line_color='red'
+    # ))
+    # phase_score_fig.write_html('outputs/graphs/phase_breakdown/phase_breakdown_comparison.html', auto_open=False) # <-- USE HTML FOR FINAL PRODUCT
     print(f"{'Phase Breakdown Data':<25} Successfully Saved\n")
 
     print("Saving Phase Overlay Videos:")
