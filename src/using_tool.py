@@ -11,8 +11,9 @@ from matplotlib.ticker import FuncFormatter
 import plotly.graph_objects as go
 import os
 from src.pose import Engine
-from src.pose.features import *
 from src.phase_classes.phase_classes import summary_data
+from src.phase_classes.output_formatting import get_phase_output_format
+from src.pose.features import *
 
 # KEY:
 # rgc = right ground contact
@@ -222,8 +223,7 @@ def analyze(user_video, engine, show):
 
     elif engine == 'yolo26':
         from src.pose import yolo26_video_processor as video_processor
-        # phase_classifier = 'assets/phase_classifier_models/yolo26_phase_classifier.keras'
-        phase_classifier = 'assets/phase_classifier_models/mmpose_front_angle_phase_classifier.keras'
+        phase_classifier = 'assets/phase_classifier_models/yolo26_phase_classifier.keras'
 
     elif engine == 'mmpose':
         from src.pose import mmpose_video_processor as video_processor
@@ -459,115 +459,55 @@ def analyze(user_video, engine, show):
     print("Saving Phase Scoring Metrics:")
     with open('outputs/metrics/Right_Ground_Contact.txt', 'w') as f:
         f.write(
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-
-          f"Right Ground Contact:\n\n"
-
-          f"Phase Scores:\n"
-          f"{phase_scores[rgc_phase_index][:, 0]}\n\n"
-
-          f"Faulty Reps:\n"
-          f"{rep_index[rgc_phase_index][faulty_phases[rgc_phase_index]]}\n\n"
-
-          f"Faulty Rep Frames:\n"
-          f"{faulty_phase_frames[0]}"
-
-          f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
+            get_phase_output_format(phase_name="Right Ground Contact",
+                                    phase_scores=phase_scores[rgc_phase_index][:, 0],
+                                    faulty_reps=rep_index[rgc_phase_index][faulty_phases[rgc_phase_index]],
+                                    faulty_rep_frames=faulty_phase_frames[0])
         )
     print(f"{'Right_Ground_Contact.txt':<25} Successfully Saved")
 
     with open('outputs/metrics/Right_Propulsion.txt', 'w') as f:
         f.write(
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-
-            f"Right Propulsion:\n\n"
-
-            f"Phase Scores:\n"
-            f"{phase_scores[rp_phase_index][:, 0]}\n\n"
-
-            f"Faulty Reps:\n"
-            f"{rep_index[rp_phase_index][faulty_phases[rp_phase_index]]}\n\n"
-
-            f"Faulty Rep Frames:\n"
-            f"{faulty_phase_frames[1]}"
-
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
+            get_phase_output_format(phase_name="Right Propulsion",
+                                    phase_scores=phase_scores[rp_phase_index][:, 0],
+                                    faulty_reps=rep_index[rp_phase_index][faulty_phases[rp_phase_index]],
+                                    faulty_rep_frames=faulty_phase_frames[1])
         )
     print(f"{'Right_Propulsion.txt':<25} Successfully Saved")
 
     with open('outputs/metrics/Right_Flight.txt', 'w') as f:
         f.write(
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-
-            f"Right Flight:\n\n"
-
-            f"Phase Scores:\n"
-            f"{phase_scores[rf_phase_index][:, 0]}\n\n"
-
-            f"Faulty Reps:\n"
-            f"{rep_index[rf_phase_index][faulty_phases[rf_phase_index]]}\n\n"
-
-            f"Faulty Rep Frames:\n"
-            f"{faulty_phase_frames[2]}"
-
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
+            get_phase_output_format(phase_name="Right Flight",
+                                    phase_scores=phase_scores[rf_phase_index][:, 0],
+                                    faulty_reps=rep_index[rf_phase_index][faulty_phases[rf_phase_index]],
+                                    faulty_rep_frames=faulty_phase_frames[2])
         )
     print(f"{'Right_Flight.txt':<25} Successfully Saved")
 
     with open('outputs/metrics/Left_Ground_Contact.txt', 'w') as f:
         f.write(
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-
-            f"Left Ground Contact:\n\n"
-
-            f"Phase Scores:\n"
-            f"{phase_scores[lgc_phase_index][:, 0]}\n\n"
-
-            f"Faulty Reps:\n"
-            f"{rep_index[lgc_phase_index][faulty_phases[lgc_phase_index]]}\n\n"
-
-            f"Faulty Rep Frames:\n"
-            f"{faulty_phase_frames[3]}"
-
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
+            get_phase_output_format(phase_name="Left Ground Contact",
+                                    phase_scores=phase_scores[lgc_phase_index][:, 0],
+                                    faulty_reps=rep_index[lgc_phase_index][faulty_phases[lgc_phase_index]],
+                                    faulty_rep_frames=faulty_phase_frames[3])
         )
     print(f"{'Left_Ground_Contact.txt':<25} Successfully Saved")
 
     with open('outputs/metrics/Left_Propulsion.txt', 'w') as f:
         f.write(
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-
-          f"Left Propulsion:\n\n"
-
-          f"Phase Scores:\n"
-          f"{phase_scores[lp_phase_index][:, 0]}\n\n"
-
-          f"Faulty Reps:\n"
-          f"{rep_index[lp_phase_index][faulty_phases[lp_phase_index]]}\n\n"
-
-          f"Faulty Rep Frames:\n"
-          f"{faulty_phase_frames[4]}"
-
-          f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
+            get_phase_output_format(phase_name="Left Propulsion",
+                                    phase_scores=phase_scores[lp_phase_index][:, 0],
+                                    faulty_reps=rep_index[lp_phase_index][faulty_phases[lp_phase_index]],
+                                    faulty_rep_frames=faulty_phase_frames[4])
         )
     print(f"{'Left_Propulsion.txt':<25} Successfully Saved")
 
     with open('outputs/metrics/Left_Flight.txt', 'w') as f:
         f.write(
-            f"\n\n-------------------------------------------------------------------------------------------------------------\n\n"
-
-          f"Left Flight:\n\n"
-
-          f"Phase Scores:"
-          f"\n{phase_scores[lf_phase_index][:, 0]}\n\n"
-
-          f"Faulty Reps:\n"
-          f"{rep_index[lf_phase_index][faulty_phases[lf_phase_index]]}\n\n"
-
-          f"Faulty Rep Frames:"
-          f"\n{faulty_phase_frames[5]}"
-
-          f"\n\n-------------------------------------------------------------------------------------------------------------"
+            get_phase_output_format(phase_name="Left Flight",
+                                    phase_scores=phase_scores[lf_phase_index][:, 0],
+                                    faulty_reps=rep_index[lf_phase_index][faulty_phases[lf_phase_index]],
+                                    faulty_rep_frames=faulty_phase_frames[5])
         )
     print(f"{'Left_Flight.txt':<25} Successfully Saved\n")
 
@@ -793,12 +733,12 @@ Seconds: {left_contact_lengths / 30}
 
     print('Saving Dashboard Video:')
 
-    PHASE_STRINGS = ['Right Ground Contact',
+    PHASE_STRINGS = ('Right Ground Contact',
                      'Right Propulsion',
                      'Right Flight',
                      'Left Ground Contact',
                      'Left Propulsion',
-                     'Left Flight']
+                     'Left Flight')
 
     feature_colors = {
         'red': [(64, 64, 255), (96, 96, 255), (128, 128, 255), (160, 160, 255), (192, 192, 255)],
