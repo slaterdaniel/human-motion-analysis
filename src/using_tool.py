@@ -57,7 +57,7 @@ def find_phase_scores(frame_scores, user_predictions, window_size=9):
 
     return np.array(total_scores), np.array(phase_lengths)
 
-def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, window_size=9):
+def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, COORDINATE_PAIRS, window_size=9):
     """
     Saves video of the user's best instance of a phase overlaid on the worst instance
     Args:
@@ -133,7 +133,7 @@ def save_video(file, worst_frame, worst_length, best_frame, best_length, raw_dat
         greatest_deviation = np.argmax(np.abs(frame_scores))
         
         # Draw Circle Around Largest Deviation
-        feature_offset = 16 if len(raw_data) == 42 else 20
+        feature_offset = 32
         greatest_deviation_coords = (feature_coords[curr_frame, feature_offset + COORDINATE_PAIRS[greatest_deviation][0]],
                                   feature_coords[curr_frame, feature_offset + COORDINATE_PAIRS[greatest_deviation][1]])
         cv2.circle(skeleton_frame, greatest_deviation_coords, 40, color, 5)
@@ -431,13 +431,7 @@ def analyze(user_video, engine, show):
         last_phase = user_predictions[start]
         phase_count = 0
 
-        # # count number of frames within window
-        # for phase in user_predictions[start+1:end]:
-        #     if (phase == 0 or phase == 3) and phase != last_phase: # Count rep when left or right foot hits the ground
-        #         count += 1
-        #     last_phase = phase
-        # strides_per_sec.append(count * window / (end-start)) # Adjust count to window size
-
+        # count number of frames within window
         for phase in user_predictions[start+1:end]:
             if phase != last_phase:
                 phase_count += 1
@@ -595,7 +589,7 @@ def analyze(user_video, engine, show):
 
     r_midstance_dorsiflexion = np.mean(raw_data[R_ANKLE_ANGLE, right_midstances])
     l_midstance_dorsiflexion = np.mean(raw_data[L_ANKLE_ANGLE, left_midstances])
-    forward_lean = 90 - np.mean(np.concatenate((raw_data[R_FORWARD_LEAN, right_midstances],
+    forward_lean = np.mean(np.concatenate((raw_data[R_FORWARD_LEAN, right_midstances],
                                                raw_data[L_FORWARD_LEAN, left_midstances])))
 
     # ---------------------------------------------------------
@@ -606,7 +600,6 @@ def analyze(user_video, engine, show):
 
     # ---------------------------------------------------------
     # Swing phase
-
 
 
     # Save Ground Contact Timing
@@ -761,42 +754,42 @@ Seconds: {left_contact_lengths / 30}
                phase_lengths[rgc_phase_index][np.argmax(phase_scores[rgc_phase_index][:, 0])],
                phase_scores[rgc_phase_index][:, 1][np.argmin(phase_scores[rgc_phase_index][:, 0])],
                phase_lengths[rgc_phase_index][np.argmin(phase_scores[rgc_phase_index][:, 0])],
-               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, COORDINATE_PAIRS)
 
     save_video(save_path + 'Right_Propulsion.mp4',
                phase_scores[rp_phase_index][:, 1][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmax(phase_scores[rp_phase_index][:, 0])],
                phase_scores[rp_phase_index][:, 1][np.argmin(phase_scores[rp_phase_index][:, 0])],
                phase_lengths[rp_phase_index][np.argmin(phase_scores[rp_phase_index][:, 0])],
-               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, COORDINATE_PAIRS)
 
     save_video(save_path + 'Right_Flight.mp4',
                phase_scores[rf_phase_index][:, 1][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmax(phase_scores[rf_phase_index][:, 0])],
                phase_scores[rf_phase_index][:, 1][np.argmin(phase_scores[rf_phase_index][:, 0])],
                phase_lengths[rf_phase_index][np.argmin(phase_scores[rf_phase_index][:, 0])],
-               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, COORDINATE_PAIRS)
 
     save_video(save_path + 'Left_Ground_Contact.mp4',
                phase_scores[lgc_phase_index][:, 1][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmax(phase_scores[lgc_phase_index][:, 0])],
                phase_scores[lgc_phase_index][:, 1][np.argmin(phase_scores[lgc_phase_index][:, 0])],
                phase_lengths[lgc_phase_index][np.argmin(phase_scores[lgc_phase_index][:, 0])],
-               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, COORDINATE_PAIRS)
 
     save_video(save_path + 'Left_Propulsion.mp4',
                phase_scores[lp_phase_index][:, 1][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmax(phase_scores[lp_phase_index][:, 0])],
                phase_scores[lp_phase_index][:, 1][np.argmin(phase_scores[lp_phase_index][:, 0])],
                phase_lengths[lp_phase_index][np.argmin(phase_scores[lp_phase_index][:, 0])],
-               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, COORDINATE_PAIRS)
 
     save_video(save_path + 'Left_Flight.mp4',
                phase_scores[lf_phase_index][:, 1][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmax(phase_scores[lf_phase_index][:, 0])],
                phase_scores[lf_phase_index][:, 1][np.argmin(phase_scores[lf_phase_index][:, 0])],
                phase_lengths[lf_phase_index][np.argmin(phase_scores[lf_phase_index][:, 0])],
-               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS)
+               raw_data, feature_coords, user_predictions, scored_data, FEATURE_STRINGS, COORDINATE_PAIRS)
 
     print('Saving Dashboard Video:')
 
@@ -887,12 +880,18 @@ Seconds: {left_contact_lengths / 30}
             skeleton_frame = np.clip(skeleton_frame * [0.5, 0.5, 1], 0, 255).astype(np.uint8)
 
         error_index = np.argsort(np.abs(scored_data[:, frame]))[-5:][::-1]
+        # print("\n")
+        # print(scored_data[error_index, frame])
+        # print(error_index)
+        # print(scored_data[:, frame])
+        # print(raw_data[-4:, frame])
 
         # Draw Circle Around Largest Deviation
-        feature_offset = 16 if engine == 'yolo26' else 20
+        feature_offset = NOSE_X
         for i in range(5):
-            greatest_deviation_coords = (feature_coords[border + frame, 20 + COORDINATE_PAIRS[error_index[i]][0]],
-                                      feature_coords[border + frame, 20 + COORDINATE_PAIRS[error_index[i]][1]])
+            coord_pair = COORDINATE_PAIRS[error_index[i]]
+            greatest_deviation_coords = (feature_coords[border + frame, feature_offset + coord_pair[0]],
+                                      feature_coords[border + frame, feature_offset + coord_pair[1]])
             cv2.circle(skeleton_frame, greatest_deviation_coords, 30, feature_colors[zone][i], 3)
 
         concatenate = cv2.hconcat if vertical else cv2.vconcat
