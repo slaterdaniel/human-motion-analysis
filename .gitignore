@@ -19,4 +19,6 @@ Sprint_Analysis
 *.png
 *.txt
 
+mmpose/configs/wholebody_2d_keypoint/rtmpose/*
+
 !docs/*.mp4
