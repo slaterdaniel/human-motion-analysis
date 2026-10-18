@@ -144,25 +144,25 @@ def get_data(show=False, user_video=None):
 
             if R_FOOT_KP:
                 # right foot inclination angle
-                a = (current_pose[R_ANKLE_KP, 0] + 100, current_pose[R_ANKLE_KP, 1])
+                a = (current_pose[R_ANKLE_KP, 0] - 100, current_pose[R_ANKLE_KP, 1])
                 b = current_pose[R_ANKLE_KP]
                 c = current_pose[R_FOOT_KP]
                 data[curr_frame, R_FOOT_INCLINATION_ANGLE] = Engine.find_angle(a, b, c)
 
                 # left foot inclination angle
-                a = (current_pose[L_ANKLE_KP, 0] + 100, current_pose[L_ANKLE_KP, 1])
+                a = (current_pose[L_ANKLE_KP, 0] - 100, current_pose[L_ANKLE_KP, 1])
                 b = current_pose[L_ANKLE_KP]
                 c = current_pose[L_FOOT_KP]
                 data[curr_frame, L_FOOT_INCLINATION_ANGLE] = Engine.find_angle(a, b, c)
 
-            # right tibial angle
-            a = (current_pose[R_HIP_KP, 0] + 100, current_pose[R_HIP_KP, 1])
+            # right forward lean angle
+            a = (current_pose[R_HIP_KP, 0], current_pose[R_HIP_KP, 1] - 100)
             b = current_pose[R_HIP_KP]
             c = current_pose[R_SHOULDER_KP]
             data[curr_frame, R_FORWARD_LEAN] = Engine.find_angle(a, b, c)
 
             # left forward lean angle
-            a = (current_pose[L_HIP_KP, 0] + 100, current_pose[L_HIP_KP, 1])
+            a = (current_pose[L_HIP_KP, 0], current_pose[L_HIP_KP, 1] - 100)
             b = current_pose[L_HIP_KP]
             c = current_pose[L_SHOULDER_KP]
             data[curr_frame, L_FORWARD_LEAN] = Engine.find_angle(a, b, c)
