@@ -15,6 +15,8 @@ from src.phase_classes.phase_classes import summary_data
 from src.phase_classes.output_formatting import get_phase_output_format
 from src.pose.features import *
 
+from sklearn.decomposition import PCA
+
 # KEY:
 # rgc = right ground contact
 # rp  = right propulsion phase
@@ -540,6 +542,15 @@ def analyze(user_video, engine, show):
 
     # ---------------------------------------------------------
     # Swing phase
+
+    print(scored_data.T[0])
+    print(scored_data.T[1])
+    print(scored_data.T[len(scored_data)//2])
+    pca = PCA().fit(scored_data.T)
+    cum = np.cumsum(pca.explained_variance_ratio_)
+    print("Variance explained by first 5 components:", pca.explained_variance_ratio_[:5])
+    print("Components needed for 90% variance:", np.searchsorted(cum, 0.90) + 1)
+    print("Components needed for 95% variance:", np.searchsorted(cum, 0.95) + 1)
 
 
     # Save Ground Contact Timing

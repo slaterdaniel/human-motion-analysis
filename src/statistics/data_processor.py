@@ -1,5 +1,6 @@
 from phase_classes.phase_classes import *
 from tensorflow.keras.models import load_model
+from sklearn.decomposition import PCA
 import numpy as np
 
 def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
@@ -42,7 +43,6 @@ def interpolate_phase(phase, phase_num, reference_predictions, n_interp=9):
             count += 1
 
         last = current
-    print(new_phase.shape)
     return new_phase
 
 def find_MAD(phase):
@@ -51,20 +51,62 @@ def find_MAD(phase):
     # median1 = middle phase
     # median2 = late phase
 
+    phase0 = phase[:, :, :3]
+    phase1 = phase[:, :, 3:6]
+    phase2 = phase[:, :, 6:]
+
     # Medians of each subphase
-    median0 = np.median(phase[:, :, :3], axis=(0, 2))[:, None]
-    median1 = np.median(phase[:, :, 3:6], axis=(0, 2))[:, None]
-    median2 = np.median(phase[:, :, 6:], axis=(0, 2))[:, None]
+    median0 = np.median(phase0, axis=(0, 2))[:, None]
+    median1 = np.median(phase1, axis=(0, 2))[:, None]
+    median2 = np.median(phase2, axis=(0, 2))[:, None]
 
     # Deviations of each subphase
-    deviation0 = np.abs(phase[:, :, :3] - median0)
-    deviation1 = np.abs(phase[:, :, 3:6] - median1)
-    deviation2 = np.abs(phase[:, :, 6:] - median2)
+    deviation0 = np.abs(phase0 - median0)
+    deviation1 = np.abs(phase1 - median1)
+    deviation2 = np.abs(phase2 - median2)
 
     # Median Absolute Deviation of each subphase
     mad0 = np.maximum(np.median(deviation0, axis=(0,2)), 1e-7)[:, None]
     mad1 = np.maximum(np.median(deviation1, axis=(0,2)), 1e-7)[:, None]
     mad2 = np.maximum(np.median(deviation2, axis=(0,2)), 1e-7)[:, None]
+
+    # ====================================================================
+    scored0 = 0.6745 * (phase0 - median0) / mad0
+    scored1 = 0.6745 * (phase1 - median1) / mad1
+    scored2 = 0.6745 * (phase2 - median2) / mad2
+
+    # [number of phase occurrences  |  features   |   interpolated subphase length=3]
+    # [examples  |  features]
+
+    scored0 = scored0.reshape(-1, phase0.shape[-1]).T.reshape(-1, phase0.shape[1])
+    scored1 = scored1.reshape(-1, phase1.shape[-1]).T.reshape(-1, phase1.shape[1])
+    scored2 = scored2.reshape(-1, phase2.shape[-1]).T.reshape(-1, phase2.shape[1])
+
+    print(scored0.shape)
+    print(scored1.shape)
+    print(scored2.shape)
+
+    pca0 = PCA().fit(scored0)
+    pca1 = PCA().fit(scored1)
+    pca2 = PCA().fit(scored2)
+
+    cum0 = np.cumsum(pca0.explained_variance_ratio_)
+    cum1 = np.cumsum(pca1.explained_variance_ratio_)
+    cum2 = np.cumsum(pca2.explained_variance_ratio_)
+
+    print("\n\n\n")
+    print("Variance explained by first 5 components:", pca0.explained_variance_ratio_[:5])
+    print("Components needed for 90% variance:", np.searchsorted(cum0, 0.90) + 1)
+    print("Components needed for 95% variance:", np.searchsorted(cum0, 0.95) + 1)
+    print()
+    print("Variance explained by first 5 components:", pca1.explained_variance_ratio_[:5])
+    print("Components needed for 90% variance:", np.searchsorted(cum1, 0.90) + 1)
+    print("Components needed for 95% variance:", np.searchsorted(cum1, 0.95) + 1)
+    print()
+    print("Variance explained by first 5 components:", pca2.explained_variance_ratio_[:5])
+    print("Components needed for 90% variance:", np.searchsorted(cum2, 0.90) + 1)
+    print("Components needed for 95% variance:", np.searchsorted(cum2, 0.95) + 1)
+    print()
 
     # Save phases into "early", "middle", and "late" subphases
     phase_stats = {
@@ -110,15 +152,10 @@ def get_phase_statistics(reference_data, ref_raw_data, engines):
                          raw[reference_predictions == 4].T,
                          raw[reference_predictions == 5].T]
         )
-        print('engine:', engine)
-        print('raw:', raw.shape)
-        print('ref:', reference_predictions.shape)
 
         for i in range(len(action.phases)):
             action.phases[i] = interpolate_phase(action.phases[i], i, reference_predictions)
             action.phase_stats[action.phase_names[i]] = find_MAD(action.phases[i])
-            if engine == 'yolo26':
-                print('     dict:', i, action.phase_stats[action.phase_names[i]]['early']['median'].shape)
 
         stats[engine] = action.phase_stats.copy()
 
