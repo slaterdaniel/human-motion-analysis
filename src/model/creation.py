@@ -56,14 +56,13 @@ def create_models(engines):
 def create_front_angle_model():
     window_size = 9
 
-    from src.pose.yolo26_video_processor import get_data
+    from src.pose.yolo26_video_processor_front_angle import get_data
     import numpy as np
 
     data, labels, _ = get_data(user_video='data/user_input/SHU-vf-normal-6.6mph.MOV')
     answer_key = np.load('assets/front_angle_labels/SHU-vf-normal-6.6mph.npy')
-    model = model_format(window_size, 62)
+    model = model_format(window_size, 54)
 
     model.fit(data, answer_key, epochs=40, batch_size=64, validation_split=0.2, shuffle=True)
-    model.save(f'assets/phase_classifier_models/mmpose_front_angle_phase_classifier.keras')
+    model.save(f'assets/phase_classifier_models/yolo26_front_angle_phase_classifier.keras')
 
-create_front_angle_model()
